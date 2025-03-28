@@ -22,5 +22,6 @@
     "nodemon": "^3.1.9",
     "openai": "^4.90.0",
     "passport": "^0.7.0"
+    "mongoose": "^8.13.0"
   }
 }
