@@ -1,3 +1,8 @@
+backend/.env
+backend/node_modules/
+frontend/.env
+frontend/node_modules/
+
 # Node modules
 node_modules/
 npm-debug.log
@@ -29,3 +34,4 @@ ios/build/
 # OS-specific files
 *.DS_Store          # macOS cache files
 Thumbs.db           # Windows thumbnail cache
+
