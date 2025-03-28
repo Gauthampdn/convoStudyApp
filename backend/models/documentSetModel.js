@@ -13,7 +13,29 @@ const documentSetSchema = new Schema(
       ref: "User", // User should be unaware of documentSet but documentSet is aware of User (Look for Child's parent rather than look for parent's children)
       required: true,
     },
-    files: [String],
+    // Array of files with properties         // Added by Daniel
+    files: [
+      {
+        name: {
+          type: String,
+          required: true,
+        },
+        fileType: {
+          // File type (pdf, docx, pptx, txt, etc)
+          type: String,
+          required: true,
+        },
+        fileNature: {
+          // File nature ("Lecture slides", "Study Guide", "Mock Exam", "Textbook", etc)
+          type: String,
+          required: true,
+        },
+        uploadedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
     tags: [String], // tags for filtering ['math', 'science', etc]
     description: String, // description of document
     stats: {
@@ -52,6 +74,25 @@ const documentSetSchema = new Schema(
           },
         },
       ],
+      // Overall statistics                   // Added by Daniel
+      overallStats: {
+        knowledgeLevel: {
+          type: Number,
+          default: 0,
+        },
+        strengths: [
+          {
+            type: String,
+            default: "",
+          },
+        ],
+        weaknesses: [
+          {
+            type: String,
+            default: "",
+          },
+        ],
+      },
     },
   },
   { timestamps: true } // adds createdAt and updatedAt
