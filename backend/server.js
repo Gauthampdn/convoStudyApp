@@ -40,7 +40,6 @@ app.use((req, res, next) => {
   console.log(req.method, req.path)
   next()
 })
-
 // routes
 app.use('/api/auth', authRoutes);
 
