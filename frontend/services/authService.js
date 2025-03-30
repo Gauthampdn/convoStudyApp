@@ -1,17 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
-import { 
-  IOS_GOOGLE_CLIENT_ID, 
-  ANDROID_GOOGLE_CLIENT_ID, 
-  WEB_GOOGLE_CLIENT_ID,
-  API_URL as ENV_API_URL
-} from '@env';
 
 // Initialize WebBrowser for Expo Auth Session
 WebBrowser.maybeCompleteAuthSession();
 
-const API_URL = ENV_API_URL || 'http://localhost:3000/api';
+// Use process.env directly - Expo automatically includes EXPO_PUBLIC_ variables
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
+const IOS_GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_IOS_GOOGLE_CLIENT_ID;
+const ANDROID_GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_ANDROID_GOOGLE_CLIENT_ID;
+const WEB_GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_WEB_GOOGLE_CLIENT_ID;
 
 export const storeAuthData = async (accessToken, refreshToken, userData) => {
   try {
