@@ -26,7 +26,32 @@ const userSchema = new Schema({
   refreshToken: {
     type: String,
     default: null
-  }
+  },
+  totalStudyTime: {
+    type: Number,
+    default: 0
+  },
+  studyStats: {
+    type: Object,
+    default: {}
+  },
+  filesUploaded: {
+    type: [String],
+    default: []
+  },
+  studySessions: [
+    {
+      documentSet: { type: mongoose.Schema.Types.ObjectId, ref: "DocumentSet" }, //Not sure if we need this. Delete this if you think we don't need this.
+      flashcardPerformance: [
+        {
+          flashcard: { type: mongoose.Schema.Types.ObjectId, ref: "Flashcard" },
+          rating: { type: String, enum: ["good", "somewhat", "incorrect"] },
+        },
+      ],
+      sessionTime: { type: Number, default: 0 },
+      createdAt: { type: Date, dafault: Date.now },
+    },
+  ]
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema); 
