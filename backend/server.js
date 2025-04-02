@@ -11,6 +11,7 @@ const cors = require('cors');
 
 // route imports
 const authRoutes = require('./routes/authRoutes');
+const docSetRoutes = require('./routes/docSetRoutes');
 
 // express app
 const app = express()
@@ -42,6 +43,7 @@ app.use((req, res, next) => {
 })
 // routes
 app.use('/api/auth', authRoutes);
+app.use('/api/docSet', docSetRoutes);
 
 // basic route for testing
 app.get('/', (req, res) => {
