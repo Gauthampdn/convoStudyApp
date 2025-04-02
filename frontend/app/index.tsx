@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Text, View, StyleSheet, TouchableOpacity, ActivityIndicator, Image } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { useGoogleAuth, processGoogleSignIn } from "../services/authService";
+import "../global.css"
 
 export default function Index() {
   const [isLoading, setIsLoading] = useState(false);
@@ -83,7 +84,8 @@ export default function Index() {
         </View>
       ) : (
         <View style={styles.card}>
-          <Text style={styles.title}>Sign In</Text>
+          {/* <Text style={styles.title}>Sign In</Text> */}
+          <Text className="text-[24px] font-bold mb-[20px] text-center">Sign In</Text>
           
           {error ? (
             <View style={styles.errorContainer}>
