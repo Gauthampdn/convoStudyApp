@@ -80,8 +80,10 @@ const styles = StyleSheet.create({
     button: {
         backgroundColor: '#007bff',
         paddingVertical: 12,
+        paddingHorizontal: 20,
         borderRadius: 8,
         fontSize: 16,
+        alignItems: 'center',
     },
 
     pages: {

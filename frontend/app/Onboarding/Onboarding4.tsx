@@ -8,7 +8,7 @@ export default function Onboarding2()
     const router = useRouter();
 
     const goNext = () => {
-        router.push('/Onboarding/Onboarding3');
+        router.push('/HomePage/StudyProgress');
     };
 
     const goBack = () => {
@@ -88,15 +88,19 @@ const styles = StyleSheet.create({
     button: {
         backgroundColor: '#007bff',
         paddingVertical: 12,
+        paddingHorizontal: 20,
         borderRadius: 8,
         fontSize: 16,
+        alignItems: 'center',
     },
 
     button2: {
         backgroundColor: '#d3d3d3',
         paddingVertical: 12,
+        paddingHorizontal: 20,
         borderRadius: 8, 
         fontSize: 16,
+        alignItems: 'center',
     },
 
     pages: {
