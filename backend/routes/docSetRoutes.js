@@ -1,9 +1,15 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const {getAllDocSets} = require('../controllers/docSetController');
-const { protect } = require('../middleware/authMiddleware');
 
-// GET route to get all document sets
+const { deleteDocSet, getAllDocSets } = require("../controllers/docSetController");
+
+const { protect } = require("../middleware/authMiddleware");
+
+router.use(protect);
+
+router.delete("/:id", deleteDocSet);
+
 router.get('/', protect, getAllDocSets);
 
-module.exports = router; 
+
+module.exports = router;
