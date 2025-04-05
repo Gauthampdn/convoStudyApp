@@ -1,12 +1,23 @@
 const express = require("express");
 const router = express.Router();
 
-const { updateDocumentSet } = require("../controllers/docSetController");
 
-const requireAuth = require("../middleware/authMiddleware"); // auth middleware
+const { 
+  deleteDocSet,
+  getAllDocSets,
+  updateDocumentSet
+} = require("../controllers/docSetController");
 
-router.use(requireAuth); // requires authentication and calls 'next'
+const { protect } = require("../middleware/authMiddleware");
+
+
+router.use(protect);
+
+router.delete("/:id", deleteDocSet);
+
+router.get('/', protect, getAllDocSets);
 
 router.patch("/:id", updateDocumentSet);
+
 
 module.exports = router;
