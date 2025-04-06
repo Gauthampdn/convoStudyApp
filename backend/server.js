@@ -73,4 +73,4 @@ mongoose
     console.log(err);
   });
 
-// listening on port
+// listening on the port
