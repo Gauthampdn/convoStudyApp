@@ -60,7 +60,7 @@ const updateDocumentSet = async (req, res) => {
     }
 
     // update document set
-    const documentSet = await DocumentSet.findOneAndUpdate(
+    const documentSet = await DocSet.findOneAndUpdate(
       { _id: id },
       {
         title,
