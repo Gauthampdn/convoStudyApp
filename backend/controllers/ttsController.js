@@ -17,7 +17,7 @@ const textToSpeech = async (req, res) => {
     const response = await axios({
       method: "post",
       url: "https://api.openai.com/v1/audio/speech",
-      responseType: "arraybuffer", // expect binary data (audio file)
+      responseType: "stream",
       headers: {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         "Content-Type": "application/json",
@@ -28,18 +28,18 @@ const textToSpeech = async (req, res) => {
         voice: voice,
         response_format: "mp3",
       },
+      timeout: 5000, // timeout in case OpenAI takes too long to generate the TTS audio
     });
 
-    // set response headers to let browser know that content is mp3 file.
-    res.set({
-      "Content-Type": "audio/mpeg",
-      "Content-Disposition": 'inline; filename="speech.mp3"',
-    });
+    // indicate that audio is being sent
+    res.set("Content-Type", "audio/mpeg");
 
-    // send mp3 file from openAI to frontend
-    res.send(response.data);
+    res.set("Content-Disposition", 'inline; filename="speech.mp3"');
+
+    // pipe the audio stream from OpenAI response to client
+    response.data.pipe(res);
   } catch (error) {
-    console.error("TTS Error: ", error.response?.data || error.message);
+    console.error("TTS stream Error: ", error.response?.data || error.message);
     res.status(500).json({ message: "Failed to generate speech" });
   }
 };
