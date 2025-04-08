@@ -10,8 +10,9 @@ const passport = require("passport");
 const cors = require("cors");
 
 // route imports
-const authRoutes = require('./routes/authRoutes');
-const docSetRoutes = require('./routes/docSetRoutes');
+const authRoutes = require("./routes/authRoutes");
+const docSetRoutes = require("./routes/docSetRoutes");
+const ttsRoutes = require("./routes/ttsRoutes");
 
 // express app
 const app = express();
@@ -50,9 +51,9 @@ app.use((req, res, next) => {
   next();
 });
 // routes
-app.use('/api/auth', authRoutes);
-app.use('/api/docSet', docSetRoutes);
-
+app.use("/api/auth", authRoutes);
+app.use("/api/docSet", docSetRoutes);
+app.use("/api/tts", ttsRoutes);
 
 // basic route for testing
 app.get("/", (req, res) => {
