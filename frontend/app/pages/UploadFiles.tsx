@@ -5,16 +5,16 @@ import {
   Pressable,
   FlatList,
   ActivityIndicator,
+  StatusBar,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import { useNavigation } from "expo-router";
 import Entypo from "@expo/vector-icons/Entypo";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import Feather from "@expo/vector-icons/Feather";
 
 export default function DocumentUpload() {
-  const [files, setFiles] = useState<
-    { files: DocumentPicker.DocumentPickerAsset[] }[]
-  >([]);
+  const [files, setFiles] = useState<DocumentPicker.DocumentPickerAsset[]>([]);
   const navigation = useNavigation();
 
   // header
@@ -38,6 +38,7 @@ export default function DocumentUpload() {
         padding: 100,
       },
     });
+    StatusBar.setBarStyle("dark-content", true);
   });
 
   const selectDocuments = async () => {
@@ -49,28 +50,100 @@ export default function DocumentUpload() {
         multiple: true,
       });
 
+      // delay for 200ms after selecting documents to prevent file access issues
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
       if (!document.canceled && document.assets) {
-        if (document.assets.length > 5) {
-          alert("Only 5 files could be uploaded!");
+        const newFiles = document.assets.filter((newFile) => {
+          if (
+            files.some(
+              (existingFile) =>
+                existingFile.name === newFile.name &&
+                existingFile.size === newFile.size
+            )
+          ) {
+            alert(
+              `Duplicate file found: ${newFile.name}.\n It won't be added.`
+            );
+            return false;
+          }
+          return true;
+        });
+
+        const totalFiles = files.length;
+
+        // error checking to make sure only 5 files could be uploaded
+        if (totalFiles < 5 && newFiles.length + totalFiles > 5) {
+          let diff = 5 - totalFiles;
+          if (diff == 1) {
+            alert(`Only ${diff} more file could be added.\n Try again.`);
+            return;
+          }
+          alert(`Only ${diff} more files could be added.\n Try again.`);
+          return;
+        } else if (totalFiles == 5) {
+          alert(
+            "Already at a max of 5 files!\n Remove a file to add a new one."
+          );
           return;
         }
-        // sorted alphabetically
-        const sortedAssets = [...document.assets].sort((a, b) =>
+
+        // sort the files alphabetically
+        const sortedFiles = [...newFiles].sort((a, b) =>
           a.name.localeCompare(b.name)
         );
 
-        const newStudyDeck = {
-          files: sortedAssets,
-        };
-
-        // adds the new study deck on top of the previous ones
-        setFiles((prevFiles) => [newStudyDeck, ...prevFiles]);
+        // adds the new file(s) on top of the previous ones
+        setFiles((prevFiles) => [...sortedFiles, ...prevFiles]);
       }
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const removeFile = (fileName: string) => {
+    // goes through every file and keeps the ones that don't match the file that's being removed
+    setFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileName));
+  };
+
+  const uploadFiles = () => {
     console.log(files);
     return files;
+  };
+
+  const getFileIcon = (mimeType: string | undefined) => {
+    switch (mimeType) {
+      case "application/pdf":
+        return (
+          <MaterialCommunityIcons
+            name="file-pdf-box"
+            size={36}
+            color={"#F04438"}
+          />
+        );
+    }
+  };
+
+  const save = (status: boolean) => {
+    return (
+      <View className="flex-1 justify-end bottom-8 mb-4">
+        <Pressable
+          className={`w-[361px] h-[44px] rounded-[12px] items-center justify-center ${
+            status ? "bg-[#2879FF]" : "bg-[#CECECE]"
+          }`}
+          onPress={uploadFiles}
+          disabled={!status}
+        >
+          <Text
+            className={`${
+              status ? "color-[#FFFFFF]" : "color-[#5A5E6B]"
+            } text-[15px] font-outfit500`}
+          >
+            Save
+          </Text>
+        </Pressable>
+      </View>
+    );
   };
 
   return (
@@ -83,13 +156,12 @@ export default function DocumentUpload() {
       </Text>
 
       <View className="items-center">
-        {/* upload box */}
+        {/** upload box */}
         <Pressable
-          className="border-[1px] border-dashed border-[#1849D6] h-[194px] w-[361px] bg-white rounded-[8px] items-center justify-center"
+          className="border-[1px] border-dashed border-[#1849D6] h-[194px] w-[361px] bg-white rounded-[8px] items-center justify-center mb-6"
           onPress={selectDocuments}
         >
           <MaterialCommunityIcons
-            className=""
             name="folder-upload"
             size={50}
             color="#2879FF"
@@ -101,7 +173,7 @@ export default function DocumentUpload() {
             OR
           </Text>
 
-          {/* browse button */}
+          {/** browse button */}
           <Pressable
             className="w-[102px] h-[36px] bg-[#FFFFFF] border-[2px] border-[#2879FF] rounded-[12px] items-center justify-center"
             onPress={selectDocuments}
@@ -114,26 +186,67 @@ export default function DocumentUpload() {
       </View>
 
       {files.length === 0 ? (
-        <View className="flex-1 justify-center items-center">
-          <Text className="text-[16px] font-outfit500 color-[#a3a9b3] leading-[1.3]">
-            No documents uploaded yet
-          </Text>
-        </View>
+        <>
+          <View className="flex-1 justify-center items-center">
+            <Text className="text-[16px] font-outfit500 color-[#a3a9b3] leading-[1.3]">
+              No documents uploaded yet
+            </Text>
+          </View>
+          <View className="flex-1 justify-center items-center">
+            {save(false)}
+          </View>
+        </>
       ) : (
-        <FlatList
-          data={files}
-          renderItem={({ item }) => (
-            <View className="">
-              {item.files.map((file, index) => (
-                <View key={index} className="bg-white p-2 mb-1 rounded-md">
-                  <Text className="text-[14px] text-black pl-[30px]">
-                    {file.name}
-                  </Text>
+        <>
+          <FlatList
+            data={files}
+            renderItem={({ item }) => (
+              <View className="bg-[#FFFFFF] w-[361px] border border-[#E7E7E7] p-[13px] m-[2px] ml-4 rounded-[12px] flex-row justify-between items-center">
+                {/** file icon */}
+                <View className="flex-row">
+                  {getFileIcon(item.mimeType)}
+                  <View className="ml-1">
+                    <Text
+                      className="text-sm font-outfit500 w-[190px] text-[#0B0B0B]"
+                      numberOfLines={1}
+                    >
+                      {item.name} {/** file name */}
+                    </Text>
+
+                    {/** file sizes */}
+                    <Text className="text-sm font-outfit400 text-[#6D6D6D]">
+                      {(() => {
+                        return (item.size ?? 0) < 1024 * 1024
+                          ? `${((item.size ?? 0) / 1024).toFixed(0)} KB`
+                          : `${((item.size ?? 0) / (1024 * 1024)).toFixed(
+                              1
+                            )} MB`;
+                      })()}
+                    </Text>
+                  </View>
                 </View>
-              ))}
-            </View>
-          )}
-        />
+
+                <View className="flex-row">
+                  {/** loading icon */}
+                  <View className="mr-3">
+                    <ActivityIndicator color={"#2879FF"} size={"small"} />
+                  </View>
+                  {/** pause button */}
+                  <View className="mr-3">
+                    <Feather name="pause-circle" size={20} color={"#5A5E6B"} />
+                  </View>
+                  {/** remove file button */}
+                  <Pressable onPress={() => removeFile(item.name)}>
+                    <Feather name="x-circle" size={20} color="#FF3636" />
+                  </Pressable>
+                </View>
+              </View>
+            )}
+          />
+          <View className="flex-1 justify-center items-center">
+            {save(true)}
+          </View>
+        </>
       )}
     </View>
   );
