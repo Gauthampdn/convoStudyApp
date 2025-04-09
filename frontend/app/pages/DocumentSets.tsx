@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   FlatList,
   Pressable,
+  StatusBar,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import dummyUser from "../../dummyUser.json";
@@ -34,6 +35,7 @@ export default function DocumentSets() {
         backgroundColor: "#F1F3F6",
       },
     });
+    StatusBar.setBarStyle("dark-content", true);
   });
 
   useEffect(() => {
