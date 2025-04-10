@@ -82,13 +82,13 @@ export default function DocumentUpload() {
         // error checking to make sure only 5 files could be uploaded
         if (totalFiles < 5 && newFiles.length + totalFiles > 5) {
           let diff = 5 - totalFiles;
-          if (diff == 1) {
+          if (diff === 1) {
             alert(`Only ${diff} more file could be added.\n Try again.`);
             return;
           }
           alert(`Only ${diff} more files could be added.\n Try again.`);
           return;
-        } else if (totalFiles == 5) {
+        } else if (totalFiles === 5) {
           alert(
             "Already at a max of 5 files!\n Remove a file to add a new one."
           );
@@ -213,7 +213,7 @@ export default function DocumentUpload() {
 
   const save = (status: boolean) => {
     return (
-      <View className="flex-1 justify-end bottom-8 mb-4">
+      <View className="flex-1 justify-end items-center bottom-8 mb-4">
         <Pressable
           className={`w-[361px] h-[44px] rounded-[12px] items-center justify-center ${
             status ? "bg-[#2879FF]" : "bg-[#CECECE]"
@@ -287,6 +287,7 @@ export default function DocumentUpload() {
         <>
           <FlatList
             data={files}
+            className="mb-[93px]"
             renderItem={({ item }) => (
               <View className="bg-[#FFFFFF] w-[361px] border border-[#E7E7E7] p-[13px] m-[2px] ml-4 rounded-[12px] flex-row justify-between items-center">
                 {/** file icon */}
@@ -351,9 +352,7 @@ export default function DocumentUpload() {
               </View>
             )}
           />
-          <View className="flex-1 justify-center items-center">
-            {save(true)}
-          </View>
+          {save(true)}
         </>
       )}
     </View>
