@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   FlatList,
   ActivityIndicator,
   StatusBar,
+  Alert,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import { useNavigation } from "expo-router";
@@ -15,6 +16,12 @@ import Feather from "@expo/vector-icons/Feather";
 
 export default function DocumentUpload() {
   const [files, setFiles] = useState<DocumentPicker.DocumentPickerAsset[]>([]);
+  const [status, setStatus] = useState<Record<string, string>>({});
+  const statusRef = useRef<Record<string, string>>({});
+  const [timeRemaining, setTimeRemaining] = useState<Record<string, number>>(
+    {}
+  );
+  const timeRef = useRef<Record<string, NodeJS.Timeout>>({});
   const navigation = useNavigation();
 
   // header
@@ -94,16 +101,69 @@ export default function DocumentUpload() {
         );
 
         // adds the new file(s) on top of the previous ones
-        setFiles((prevFiles) => [...sortedFiles, ...prevFiles]);
+        setFiles((prev) => [...sortedFiles, ...prev]);
+
+        // sets and starts the file's upload timer
+        sortedFiles.forEach((file) => {
+          setTimeRemaining((prev) => ({ ...prev, [file.name]: 10 }));
+          setStatus((prev) => ({ ...prev, [file.name]: "loading" }));
+          startTimer(file.name);
+        });
       }
     } catch (error) {
       console.error(error);
     }
   };
 
+  const startTimer = (fileName: string) => {
+    timeRef.current[fileName] = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (statusRef.current[fileName] === "paused") return prev; // skips the file if it's paused
+
+        const timeLeft = prev[fileName] ?? 0;
+        if (timeLeft <= 1) {
+          // file is done uploading
+          clearInterval(timeRef.current[fileName]!);
+          setStatus((prev) => ({ ...prev, [fileName]: "done" })); // set status to done
+          return { ...prev, [fileName]: 0 }; // set timeRef to 0
+        }
+        return { ...prev, [fileName]: timeLeft - 1 }; // decrements the timeRef by 1 (just the counter)
+      });
+    }, 1000); // every second the timer is decremented (controls the actual speed of the interval)
+  };
+
+  const pause = (fileName: string) => {
+    setStatus((prev) => {
+      const updated = { ...prev, [fileName]: "paused" };
+      statusRef.current = updated;
+      return updated;
+    });
+  };
+
+  const resume = (fileName: string) => {
+    setStatus((prev) => {
+      const updated = { ...prev, [fileName]: "loading" };
+      statusRef.current = updated;
+      return updated;
+    });
+  };
+
   const removeFile = (fileName: string) => {
-    // goes through every file and keeps the ones that don't match the file that's being removed
-    setFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileName));
+    Alert.alert(
+      "Remove File",
+      `Are you sure you want to remove '${fileName}'?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: () => {
+            // goes through every file and keeps the ones that don't match the file that's being removed
+            setFiles((prev) => prev.filter((file) => file.name !== fileName));
+          },
+        },
+      ]
+    );
   };
 
   const uploadFiles = () => {
@@ -120,6 +180,33 @@ export default function DocumentUpload() {
             size={36}
             color={"#F04438"}
           />
+        );
+    }
+  };
+
+  const statusHandler = (status: string, size: number, time: number) => {
+    switch (status) {
+      case "loading":
+        return (
+          <Text className="text-sm font-outfit400 text-[#6D6D6D]">
+            Uploading • {time}s remaining
+          </Text>
+        );
+      case "paused":
+        return (
+          <Text className="text-sm font-outfit400 text-[#6D6D6D]">
+            Upload paused • {time}s remaining
+          </Text>
+        );
+      case "done":
+        return (
+          <Text className="text-sm font-outfit400 text-[#6D6D6D]">
+            {(() => {
+              return (size ?? 0) < 1024 * 1024
+                ? `${((size ?? 0) / 1024).toFixed(0)} KB`
+                : `${((size ?? 0) / (1024 * 1024)).toFixed(1)} MB`;
+            })()}
+          </Text>
         );
     }
   };
@@ -213,28 +300,49 @@ export default function DocumentUpload() {
                       {item.name} {/** file name */}
                     </Text>
 
-                    {/** file sizes */}
-                    <Text className="text-sm font-outfit400 text-[#6D6D6D]">
-                      {(() => {
-                        return (item.size ?? 0) < 1024 * 1024
-                          ? `${((item.size ?? 0) / 1024).toFixed(0)} KB`
-                          : `${((item.size ?? 0) / (1024 * 1024)).toFixed(
-                              1
-                            )} MB`;
-                      })()}
-                    </Text>
+                    {/** displays the status of the file upload */}
+                    {statusHandler(
+                      status[item.name],
+                      item.size ?? 0,
+                      timeRemaining[item.name]
+                    )}
                   </View>
                 </View>
 
                 <View className="flex-row">
                   {/** loading icon */}
-                  <View className="mr-3">
-                    <ActivityIndicator color={"#2879FF"} size={"small"} />
-                  </View>
-                  {/** pause button */}
-                  <View className="mr-3">
-                    <Feather name="pause-circle" size={20} color={"#5A5E6B"} />
-                  </View>
+                  {status[item.name] === "loading" && (
+                    <View className="mr-3 ml-3">
+                      <ActivityIndicator color={"#2879FF"} size={"small"} />
+                    </View>
+                  )}
+
+                  {/** pause/resume button */}
+                  {status[item.name] !== "done" && (
+                    <View className="mr-3">
+                      <Pressable
+                        onPress={() =>
+                          status[item.name] === "paused"
+                            ? resume(item.name)
+                            : pause(item.name)
+                        }
+                      >
+                        {status[item.name] === "paused" ? (
+                          <Feather
+                            name="play-circle"
+                            size={20}
+                            color={"#5A5E6B"}
+                          />
+                        ) : (
+                          <Feather
+                            name="pause-circle"
+                            size={20}
+                            color={"#5A5E6B"}
+                          />
+                        )}
+                      </Pressable>
+                    </View>
+                  )}
                   {/** remove file button */}
                   <Pressable onPress={() => removeFile(item.name)}>
                     <Feather name="x-circle" size={20} color="#FF3636" />
