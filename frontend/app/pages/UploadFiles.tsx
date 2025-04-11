@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -22,6 +22,7 @@ export default function DocumentUpload() {
     {}
   );
   const timeRef = useRef<Record<string, NodeJS.Timeout>>({});
+  const [saveEnabled, setSaveEnabled] = useState(false);
   const navigation = useNavigation();
 
   // header
@@ -47,6 +48,16 @@ export default function DocumentUpload() {
     });
     StatusBar.setBarStyle("dark-content", true);
   });
+
+  useEffect(() => {
+    if (files.some((file) => status[file.name] === "done")) {
+      // allow save if there is a file ready to be saved
+      setSaveEnabled(true);
+    } else {
+      setSaveEnabled(false);
+    }
+    console.log(files, status);
+  }, [files, status]);
 
   const selectDocuments = async () => {
     try {
@@ -158,17 +169,49 @@ export default function DocumentUpload() {
           text: "Remove",
           style: "destructive",
           onPress: () => {
-            // goes through every file and keeps the ones that don't match the file that's being removed
+            // remove from files
             setFiles((prev) => prev.filter((file) => file.name !== fileName));
+
+            // remove from status
+            setStatus((prev) => {
+              const updated = { ...prev };
+              delete updated[fileName];
+              return updated;
+            });
+
+            // remove from timeRemaining
+            setTimeRemaining((prev) => {
+              const updated = { ...prev };
+              delete updated[fileName];
+              return updated;
+            });
+
+            // clear timer reference
+            if (timeRef.current[fileName]) {
+              clearInterval(timeRef.current[fileName]);
+              delete timeRef.current[fileName];
+            }
+
+            // remove from statusRef
+            if (statusRef.current[fileName]) delete statusRef.current[fileName];
           },
         },
       ]
     );
   };
 
-  const uploadFiles = () => {
-    console.log(files);
-    return files;
+  const saveFiles = () => {
+    setStatus((prev) => {
+      const uploadedStatuses = files
+        .filter((file) => status[file.name] === "done") // gets all files with "done" status
+        .reduce((acc, file) => {
+          // changes "done" to "saved"
+          acc[file.name] = "saved";
+          return acc;
+        }, {} as Record<string, string>);
+      return { ...prev, ...uploadedStatuses }; // keeps previous states but replaces "done" states with new "saved" states
+    });
+    return files.filter((file) => status[file.name] === "saved");
   };
 
   const getFileIcon = (mimeType: string | undefined) => {
@@ -199,6 +242,7 @@ export default function DocumentUpload() {
           </Text>
         );
       case "done":
+      case "saved":
         return (
           <Text className="text-sm font-outfit400 text-[#6D6D6D]">
             {(() => {
@@ -218,7 +262,7 @@ export default function DocumentUpload() {
           className={`w-[361px] h-[44px] rounded-[12px] items-center justify-center ${
             status ? "bg-[#2879FF]" : "bg-[#CECECE]"
           }`}
-          onPress={uploadFiles}
+          onPress={saveFiles}
           disabled={!status}
         >
           <Text
@@ -334,6 +378,8 @@ export default function DocumentUpload() {
                             size={20}
                             color={"#5A5E6B"}
                           />
+                        ) : status[item.name] === "saved" ? (
+                          <Feather name="check" size={20} color={"#2879FF"} />
                         ) : (
                           <Feather
                             name="pause-circle"
@@ -352,7 +398,7 @@ export default function DocumentUpload() {
               </View>
             )}
           />
-          {save(true)}
+          {save(saveEnabled)}
         </>
       )}
     </View>
