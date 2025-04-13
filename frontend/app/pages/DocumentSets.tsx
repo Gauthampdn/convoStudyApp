@@ -87,7 +87,7 @@ export default function DocumentSets() {
 
   // goes to the upload files page
   const addSet = () => {
-    router.push("/pages/UploadFiles");
+    router.navigate("/pages/UploadFiles", {id: "123"});
   };
 
   return (
