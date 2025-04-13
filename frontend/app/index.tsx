@@ -10,7 +10,6 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { useGoogleAuth, processGoogleSignIn } from "../services/authService";
 import "../global.css";
-import UploadFiles from "./pages/UploadFiles";
 import DocumentSets from "./pages/DocumentSets";
 
 export default function Index() {
@@ -62,9 +61,7 @@ export default function Index() {
     }
   };
 
-  return <DocumentSets />;
-  // return (<UploadFiles/>);
-  /*
+  // return <DocumentSets />;
   return (
     <View style={styles.container}>
       {isAuthenticated && user ? (
@@ -96,7 +93,6 @@ export default function Index() {
         </View>
       ) : (
         <View style={styles.card}>
-          {/* <Text style={styles.title}>Sign In</Text> }
           <Text className="text-[24px] font-bold mb-[20px] text-center">Sign In</Text>
           
           {error ? (
@@ -124,7 +120,7 @@ export default function Index() {
         </View>
       )}
     </View>
-  ); */
+  );
 }
 
 const styles = StyleSheet.create({
