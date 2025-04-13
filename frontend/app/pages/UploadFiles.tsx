@@ -9,21 +9,18 @@ import {
   Alert,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
-import { useNavigation } from "expo-router";
-import Entypo from "@expo/vector-icons/Entypo";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import Feather from "@expo/vector-icons/Feather";
+import * as FileSystem from "expo-file-system";
+import { useNavigation, useRouter } from "expo-router";
+import { Entypo } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 
 export default function DocumentUpload() {
   const [files, setFiles] = useState<DocumentPicker.DocumentPickerAsset[]>([]);
   const [status, setStatus] = useState<Record<string, string>>({});
-  const statusRef = useRef<Record<string, string>>({});
-  const [timeRemaining, setTimeRemaining] = useState<Record<string, number>>(
-    {}
-  );
-  const timeRef = useRef<Record<string, NodeJS.Timeout>>({});
   const [saveEnabled, setSaveEnabled] = useState(false);
   const navigation = useNavigation();
+  const router = useRouter();
 
   // header
   useLayoutEffect(() => {
@@ -38,7 +35,13 @@ export default function DocumentUpload() {
         backgroundColor: "#F1F3F6",
       },
       headerLeft: () => (
-        <Pressable onPress={() => navigation.goBack()}>
+        /** TODO: if there are files that are not in "saved" state
+         *  alert the user to check if they want to go back.
+         *  if they do, it will discard the files that aren't "saved"
+         *  else, cancel
+         *  - make a function goBackToMySets() with navigation.goBack() inside
+         */
+        <Pressable onPress={() => router.back()}>
           <Entypo name="chevron-thin-left" size={24} color="#000000" />
         </Pressable>
       ),
@@ -50,7 +53,7 @@ export default function DocumentUpload() {
   });
 
   useEffect(() => {
-    if (files.some((file) => status[file.name] === "done")) {
+    if (files.some((file) => status[file.name] === "selected")) {
       // allow save if there is a file ready to be saved
       setSaveEnabled(true);
     } else {
@@ -114,11 +117,9 @@ export default function DocumentUpload() {
         // adds the new file(s) on top of the previous ones
         setFiles((prev) => [...sortedFiles, ...prev]);
 
-        // sets and starts the file's upload timer
+        // sets status to "selected"
         sortedFiles.forEach((file) => {
-          setTimeRemaining((prev) => ({ ...prev, [file.name]: 10 }));
-          setStatus((prev) => ({ ...prev, [file.name]: "loading" }));
-          startTimer(file.name);
+          setStatus((prev) => ({ ...prev, [file.name]: "selected" }));
         });
       }
     } catch (error) {
@@ -127,36 +128,17 @@ export default function DocumentUpload() {
   };
 
   const startTimer = (fileName: string) => {
-    timeRef.current[fileName] = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (statusRef.current[fileName] === "paused") return prev; // skips the file if it's paused
+    const interval = setInterval(() => {
+      setStatus((prev) => {
+        if (prev[fileName] !== "uploading") return prev; // skip files that aren't uploading
 
-        const timeLeft = prev[fileName] ?? 0;
-        if (timeLeft <= 1) {
-          // file is done uploading
-          clearInterval(timeRef.current[fileName]!);
-          setStatus((prev) => ({ ...prev, [fileName]: "done" })); // set status to done
-          return { ...prev, [fileName]: 0 }; // set timeRef to 0
-        }
-        return { ...prev, [fileName]: timeLeft - 1 }; // decrements the timeRef by 1 (just the counter)
+        // change status to "saved" after uploading is done
+        const updated = { ...prev, [fileName]: "saved" };
+        return updated;
       });
-    }, 1000); // every second the timer is decremented (controls the actual speed of the interval)
-  };
 
-  const pause = (fileName: string) => {
-    setStatus((prev) => {
-      const updated = { ...prev, [fileName]: "paused" };
-      statusRef.current = updated;
-      return updated;
-    });
-  };
-
-  const resume = (fileName: string) => {
-    setStatus((prev) => {
-      const updated = { ...prev, [fileName]: "loading" };
-      statusRef.current = updated;
-      return updated;
-    });
+      clearInterval(interval);
+    }, 5000); // simulate 5 seconds upload (will replace with actual backend uploading time)
   };
 
   const removeFile = (fileName: string) => {
@@ -172,48 +154,84 @@ export default function DocumentUpload() {
             // remove from files
             setFiles((prev) => prev.filter((file) => file.name !== fileName));
 
-            // remove from status
-            setStatus((prev) => {
-              const updated = { ...prev };
-              delete updated[fileName];
-              return updated;
-            });
-
-            // remove from timeRemaining
-            setTimeRemaining((prev) => {
-              const updated = { ...prev };
-              delete updated[fileName];
-              return updated;
-            });
-
-            // clear timer reference
-            if (timeRef.current[fileName]) {
-              clearInterval(timeRef.current[fileName]);
-              delete timeRef.current[fileName];
-            }
-
-            // remove from statusRef
-            if (statusRef.current[fileName]) delete statusRef.current[fileName];
+            // sends updated files (w/o the removed file) to backend
+            sendToBackend(files);
           },
         },
       ]
     );
   };
 
-  const saveFiles = () => {
-    setStatus((prev) => {
-      const uploadedStatuses = files
-        .filter((file) => status[file.name] === "done") // gets all files with "done" status
-        .reduce((acc, file) => {
-          // changes "done" to "saved"
-          acc[file.name] = "saved";
-          return acc;
-        }, {} as Record<string, string>);
-      return { ...prev, ...uploadedStatuses }; // keeps previous states but replaces "done" states with new "saved" states
-    });
-    return files.filter((file) => status[file.name] === "saved");
+  const getBase64Url = async (uri: string, mimeType: string | undefined) => {
+    try {
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      return `data:${mimeType ?? "application/octet-stream"};base64,${base64}`;
+    } catch (error) {
+      console.log(error);
+    }
   };
 
+  const saveFiles = async () => {
+    // only set status to "uploading" for files that aren't already "saved"
+    setStatus((prev) => {
+      const updated = { ...prev };
+      for (const file of files) {
+        if (prev[file.name] !== "saved") {
+          updated[file.name] = "uploading";
+        }
+      }
+      return updated;
+    });
+
+    // start timers for unsaved files
+    files.forEach((file) => {
+      if (status[file.name] !== "saved") {
+        startTimer(file.name);
+      }
+    });
+
+    // sends all the files for now
+    sendToBackend(files);
+  };
+
+  const sendToBackend = async (
+    savedFiles: DocumentPicker.DocumentPickerAsset[]
+  ) => {
+    const fileMetaList = await Promise.all(
+      savedFiles.map(async (file) => {
+        const base64Url = await getBase64Url(file.uri, file.mimeType);
+        return {
+          name: file.name,
+          type: file.mimeType,
+          base64Url,
+        };
+      })
+    );
+
+    console.log(fileMetaList);
+
+    try {
+      // TODO: need the document set id to be passed
+      const response = await fetch(`http://localhost:8081/api/docSet/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          files: fileMetaList,
+        }),
+      });
+
+      if (!response.ok) throw new Error(`Error: ${response.status}`);
+      console.log("Success", await response.json());
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // depending on file type, it will display a diff icon (add more cases for diff file types)
   const getFileIcon = (mimeType: string | undefined) => {
     switch (mimeType) {
       case "application/pdf":
@@ -227,30 +245,20 @@ export default function DocumentUpload() {
     }
   };
 
-  const statusHandler = (status: string, size: number, time: number) => {
+  // handles the loading/checkmark icon
+  const statusHandler = (status: string) => {
     switch (status) {
-      case "loading":
+      case "uploading":
         return (
-          <Text className="text-sm font-outfit400 text-[#6D6D6D]">
-            Uploading • {time}s remaining
-          </Text>
+          <View className="mr-3 ml-3">
+            <ActivityIndicator color={"#2879FF"} size={"small"} />
+          </View>
         );
-      case "paused":
-        return (
-          <Text className="text-sm font-outfit400 text-[#6D6D6D]">
-            Upload paused • {time}s remaining
-          </Text>
-        );
-      case "done":
       case "saved":
         return (
-          <Text className="text-sm font-outfit400 text-[#6D6D6D]">
-            {(() => {
-              return (size ?? 0) < 1024 * 1024
-                ? `${((size ?? 0) / 1024).toFixed(0)} KB`
-                : `${((size ?? 0) / (1024 * 1024)).toFixed(1)} MB`;
-            })()}
-          </Text>
+          <View className="mr-3 ml-3">
+            <Feather name="check" color={"#2879FF"} size={20} />
+          </View>
         );
     }
   };
@@ -342,54 +350,27 @@ export default function DocumentUpload() {
                       className="text-sm font-outfit500 w-[190px] text-[#0B0B0B]"
                       numberOfLines={1}
                     >
-                      {item.name} {/** file name */}
+                      {/** file name */}
+                      {item.name}
                     </Text>
 
-                    {/** displays the status of the file upload */}
-                    {statusHandler(
-                      status[item.name],
-                      item.size ?? 0,
-                      timeRemaining[item.name]
-                    )}
+                    {/** file size */}
+                    <Text className="text-sm font-outfit400 text-[#6D6D6D]">
+                      {(() => {
+                        return (item.size ?? 0) < 1024 * 1024
+                          ? `${((item.size ?? 0) / 1024).toFixed(0)} KB`
+                          : `${((item.size ?? 0) / (1024 * 1024)).toFixed(
+                              1
+                            )} MB`;
+                      })()}
+                    </Text>
                   </View>
                 </View>
 
                 <View className="flex-row">
-                  {/** loading icon */}
-                  {status[item.name] === "loading" && (
-                    <View className="mr-3 ml-3">
-                      <ActivityIndicator color={"#2879FF"} size={"small"} />
-                    </View>
-                  )}
+                  {/** loading/check icon */}
+                  {statusHandler(status[item.name])}
 
-                  {/** pause/resume button */}
-                  {status[item.name] !== "done" && (
-                    <View className="mr-3">
-                      <Pressable
-                        onPress={() =>
-                          status[item.name] === "paused"
-                            ? resume(item.name)
-                            : pause(item.name)
-                        }
-                      >
-                        {status[item.name] === "paused" ? (
-                          <Feather
-                            name="play-circle"
-                            size={20}
-                            color={"#5A5E6B"}
-                          />
-                        ) : status[item.name] === "saved" ? (
-                          <Feather name="check" size={20} color={"#2879FF"} />
-                        ) : (
-                          <Feather
-                            name="pause-circle"
-                            size={20}
-                            color={"#5A5E6B"}
-                          />
-                        )}
-                      </Pressable>
-                    </View>
-                  )}
                   {/** remove file button */}
                   <Pressable onPress={() => removeFile(item.name)}>
                     <Feather name="x-circle" size={20} color="#FF3636" />
