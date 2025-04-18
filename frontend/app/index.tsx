@@ -1,7 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { Text, View, StyleSheet, TouchableOpacity, ActivityIndicator, Image } from "react-native";
+import {
+  Text,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Image,
+} from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { useGoogleAuth, processGoogleSignIn } from "../services/authService";
+import "../global.css";
+import DocumentSets from "./pages/DocumentSets";
 
 export default function Index() {
   const [isLoading, setIsLoading] = useState(false);
@@ -11,7 +20,7 @@ export default function Index() {
   const { request, response, promptAsync } = useGoogleAuth();
 
   useEffect(() => {
-    if (response?.type === 'success') {
+    if (response?.type === "success") {
       handleGoogleResponse();
     }
   }, [response]);
@@ -52,6 +61,7 @@ export default function Index() {
     }
   };
 
+  // return <DocumentSets />;
   return (
     <View style={styles.container}>
       {isAuthenticated && user ? (
@@ -83,7 +93,7 @@ export default function Index() {
         </View>
       ) : (
         <View style={styles.card}>
-          <Text style={styles.title}>Sign In</Text>
+          <Text className="text-[24px] font-bold mb-[20px] text-center">Sign In</Text>
           
           {error ? (
             <View style={styles.errorContainer}>
