@@ -47,7 +47,7 @@ const getAllDocSets = async (req, res) => {
             message: 'Server error while fetching document sets'
         });
     }
-}
+};
 
 const updateDocumentSet = async (req, res) => {
   const { id } = req.params;
@@ -83,8 +83,24 @@ const updateDocumentSet = async (req, res) => {
   }
 };
 
+const getDocumentSet = async (req, res) => {
+  const { id } = req.params;
+  const { title, files, tags, description, stats } = req.body;
+
+  const docSet = await DocSet.findById(id);
+
+  if (!docSet) {
+    return res.status(404).json({ message: "Document Set not found" });
+  }
+
+  res.status(200).json(docSet);
+};
+  
+  
+  
 module.exports = {
   getAllDocSets,
   updateDocumentSet,
-  deleteDocSet
+  deleteDocSet,
+  getDocumentSet
 };

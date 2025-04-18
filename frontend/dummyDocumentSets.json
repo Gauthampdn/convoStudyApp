@@ -1,0 +1,46 @@
+[
+  {
+    "title": "AP Biology Notes",
+    "userId": "6611a8207b1cfb3e3d9f1234",
+    "files": ["ap-bio-notes.pdf"],
+    "tags": ["biology", "ap"],
+    "description": "Study notes for AP Biology exam",
+    "stats": {
+      "sessions": [
+        {
+          "sessionDate": "2024-04-05T15:30:00.000Z",
+          "totalQuestions": 20,
+          "correct": 15,
+          "somewhatCorrect": 3,
+          "incorrect": 2,
+          "accuracy": 0.85,
+          "timeSpent": 1200
+        }
+      ]
+    },
+    "createdAt": "2024-04-06T10:10:00.000Z",
+    "updatedAt": "2024-04-06T11:50:00.000Z"
+  },
+  {
+    "title": "Physics Homework Solutions",
+    "userId": "6611a8207b1cfb3e3d9f1234",
+    "files": ["physics-homework.pdf", "solutions-key.pdf"],
+    "tags": ["physics", "homework"],
+    "description": "Solutions for recent physics homework problems",
+    "stats": {
+      "sessions": [
+        {
+          "sessionDate": "2024-04-06T10:00:00.000Z",
+          "totalQuestions": 15,
+          "correct": 12,
+          "somewhatCorrect": 2,
+          "incorrect": 1,
+          "accuracy": 0.80,
+          "timeSpent": 900
+        }
+      ]
+    },
+    "createdAt": "2024-04-06T11:00:00.000Z",
+    "updatedAt": "2024-04-06T12:10:00.000Z"
+  }
+]
