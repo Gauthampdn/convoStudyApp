@@ -5,6 +5,6 @@ const sttController = require("../controllers/sttController");
 
 router.use(protect);
 
-router.post("/transcribe", sttController.transcribeFromUrl);
+router.post("/transcribe", sttController.streamFromMic);
 
 module.exports = router;
