@@ -1,0 +1,18 @@
+{
+    "_id": "6611a8207b1cfb3e3d9f1234",
+    "email": "test@example.com",
+    "name": "Test User",
+    "picture": "https://ui-avatars.com/api/?name=Test+User",
+    "googleId": "google-oauth-id",
+    "refreshToken": null,
+    "totalStudyTime": 3600,
+    "studyStats": {
+      "math": { "sessions": 3, "correct": 15, "incorrect": 5 },
+      "biology": { "sessions": 2, "correct": 10, "incorrect": 2 }
+    },
+    "filesUploaded": [],
+    "studySessions": [],
+    "createdAt": "2024-04-06T10:00:00.000Z",
+    "updatedAt": "2024-04-06T12:00:00.000Z"
+  }
+  

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
 # dependencies
@@ -36,3 +37,42 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+=======
+backend/.env
+backend/node_modules/
+frontend/.env
+frontend/node_modules/
+
+# Node modules
+node_modules/
+npm-debug.log
+yarn-error.log
+.env                # Environment variables (sensitive info)
+.env.*              # If you use multiple environment files (e.g., .env.production)
+dist/               # Compiled files (if using a build folder)
+coverage/           # Test coverage reports
+
+# MongoDB database dumps
+*.dump
+*.log
+data/               # If you store local MongoDB data
+
+# Metro bundler cache
+.expo
+.expo-shared
+.bundle
+
+# Build artifacts
+build/
+android/app/build/
+ios/Pods/
+ios/build/
+*.xcworkspace       # Xcode workspace data
+*.xcuserstate       # Xcode user data
+*.lock              # Lock files (yarn.lock, package-lock.json) if you want to exclude them from commits
+
+# OS-specific files
+*.DS_Store          # macOS cache files
+Thumbs.db           # Windows thumbnail cache
+
+>>>>>>> 8a6f158b374cf0f1bc183b9c003d545af304087b
