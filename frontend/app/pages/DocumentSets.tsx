@@ -12,15 +12,18 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import dummyUser from "../../dummyUser.json";
 import dummyDocumentSets from "../../dummyDocumentSets.json";
 import dummyEmptyDocSet from "../../dummyEmptyDocSet.json";
-import { DocumentSet } from "../interfaces/interfaces";
+import DocumentSet from "../interfaces/interfaces";
 import Entypo from "@expo/vector-icons/Entypo";
 import { useRouter, useNavigation } from "expo-router";
+import { useWindowDimensions } from "react-native";
 
 export default function DocumentSets() {
   const [documentSets, selectDocumentSets] = useState<DocumentSet[]>([]);
   const [hasDocuments, setHasDocuments] = useState(false);
   const router = useRouter();
   const navigation = useNavigation();
+  const { width, height } = useWindowDimensions();
+  const isMobile = width < 768;
 
   // header
   useLayoutEffect(() => {
@@ -87,18 +90,22 @@ export default function DocumentSets() {
 
   // goes to the upload files page
   const addSet = () => {
-    router.navigate("/pages/UploadFiles", {id: "123"});
+    router.navigate("/pages/UploadFiles", { id: "123" });
   };
 
   return (
     <View className="flex-1 bg-[#F1F3F6] items-center">
       {!hasDocuments ? (
-        // empty state
+        // empty state w-[333px] h-[242px] mt-[50]
         <View className="items-center">
           <Image
-            className="w-[333px] h-[242px] mt-[50]"
             source={require("../../assets/images/noStudySetsImg.png")}
             resizeMode="contain"
+            className="mt-[50]"
+            style={{
+              width: isMobile ? width * 0.8 : width * 0.4,
+              height: height * 0.3,
+            }}
           />
           <Text className="text-[16px] font-outfit600 leading-[1.5] color-[#1F1F23] mt-5">
             No study sets yet!
