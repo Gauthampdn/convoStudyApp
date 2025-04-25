@@ -1,4 +1,4 @@
-export interface DocumentSet {
+export default interface DocumentSet {
     // _id: string;
     title: string;
     userId: string;
