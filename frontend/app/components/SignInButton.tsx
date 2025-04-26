@@ -62,11 +62,11 @@ export default function SignIn() {
   };
 
   const handleSkip = () => {
-    router.replace("/pages/Home/Uploads")
+    router.replace("/pages/Home/Uploads");
   };
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-white items-center align-center">
       {isAuthenticated && user ? (
         <View style={styles.card}>
           <Text style={styles.title}>User Data</Text>
@@ -99,11 +99,7 @@ export default function SignIn() {
           </TouchableOpacity>
         </View>
       ) : (
-        <View style={styles.card}>
-          <Text className="text-[24px] font-bold mb-[20px] text-center">
-            Sign In
-          </Text>
-
+        <View className="flex-1 items-center justify-center">
           {error ? (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{error}</Text>
@@ -111,7 +107,7 @@ export default function SignIn() {
           ) : null}
 
           <TouchableOpacity
-            style={styles.googleButton}
+            className="w-[358px] h-[48px] absolute bottom-[170px] bg-[#2879FF] rounded-[12px] justify-center"
             onPress={handleGoogleSignIn}
             disabled={isLoading || !request}
           >
@@ -119,16 +115,17 @@ export default function SignIn() {
               <ActivityIndicator color="#fff" />
             ) : (
               <>
-                <View style={styles.googleIconContainer}>
-                  <Text style={styles.googleIcon}>G</Text>
+                <View className="align-center">
+                  <Text className="font-outfit600 text-[16px] text-white text-center">
+                    Sign Up
+                  </Text>
                 </View>
-                <Text style={styles.googleButtonText}>Sign in with Google</Text>
               </>
             )}
           </TouchableOpacity>
 
           <TouchableOpacity
-            className="flex-row bg-gray-500 p-[12] border-[4] items-center justify-center mt-[10]"
+            className="w-[358px] h-[48px] absolute bottom-[110px] bg-white border-[#2879FF] border-[1px] rounded-[12px] justify-center"
             onPress={handleSkip}
             disabled={isLoading || !request}
           >
@@ -136,7 +133,9 @@ export default function SignIn() {
               <ActivityIndicator color="#fff" />
             ) : (
               <>
-                <Text style={styles.googleButtonText}>Skip</Text>
+                <Text className="font-outfit600 text-[16px] text-[#2879FF] text-center">
+                  Log In
+                </Text>
               </>
             )}
           </TouchableOpacity>

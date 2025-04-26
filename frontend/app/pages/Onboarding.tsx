@@ -7,8 +7,8 @@ import {
   ViewToken,
 } from "react-native";
 import { useState, useRef } from "react";
-import OnboardingItem from "../../components/OnboardingItem";
-import Paginator from "../../components/Paginator";
+import OnboardingItem from "../components/OnboardingItem";
+import Paginator from "../components/Paginator";
 import OnboardingNextButton from "@/app/components/OnboardingNextButton";
 import { router } from "expo-router";
 
@@ -16,28 +16,28 @@ export default function Onboarding() {
   const slides = [
     {
       id: "1",
-      image: require("../../../assets/images/onboarding1.png"),
+      image: require("../../assets/images/onboarding1.png"),
       title: "Smarter Studying Starts Here",
       description:
         "Organize your notes, chat with AI, and master any subject effortlessly.",
     },
     {
       id: "2",
-      image: require("../../../assets/images/onboarding2.png"),
+      image: require("../../assets/images/onboarding2.png"),
       title: "Your Notes, Your Way",
       description:
         "Organize your notes, chat with AI, and master any subject effortlessly.",
     },
     {
       id: "3",
-      image: require("../../../assets/images/onboarding3.png"),
+      image: require("../../assets/images/onboarding3.png"),
       title: "Turn Notes Into Knowledge",
       description:
         "Chat with AI to summarize, quiz yourself, and get tailored study tips.",
     },
     {
       id: "4",
-      image: require("../../../assets/images/onboarding4.png"),
+      image: require("../../assets/images/onboarding4.png"),
       title: "Upload & Learn Instantly",
       description:
         "Chat with AI to summarize, quiz yourself, and get tailored study tips.",
@@ -66,7 +66,7 @@ export default function Onboarding() {
     if (currentIndex < slides.length - 1) {
       slidesRef.current.scrollToIndex({ index: currentIndex + 1 });
     } else {
-      router.replace();
+      router.replace("/pages/SignIn");
     }
   };
 
