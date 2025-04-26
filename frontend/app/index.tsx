@@ -13,10 +13,11 @@ import "../global.css";
 import DocumentSets from "./pages/DocumentSets";
 import BottomNavigationBar from "./components/NavigationBar/BottomNavigationTab";
 import Onboarding1 from "./pages/Onboarding/Onboarding1";
+import Onboarding from "./pages/Onboarding/Onboarding";
 
 export default function Index() {
   return (
-    <Onboarding1/>
+    <Onboarding/>
   )
   // const [isLoading, setIsLoading] = useState(false);
   // const [error, setError] = useState("");
