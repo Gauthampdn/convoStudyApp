@@ -1,5 +1,5 @@
 import { View, Text } from "react-native";
-import SignIn from "@/app/components/SignIn";
+import SignIn from "@/app/components/SignInButton";
 
 export default function Onboarding5() {
     return (
