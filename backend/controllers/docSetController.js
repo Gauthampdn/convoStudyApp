@@ -97,40 +97,40 @@ const getDocumentSet = async (req, res) => {
 };
   
 
-const uploadPDF = async (req, res) => {
+const uploadPDFs = async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: "No file has been uploaded" });
-    }
-
-    const fileData = {
-      location: req.file.location,
-      key: req.file.key,
-      originalName: req.file.originalname,
-      mimetype: req.file.mimetype,
-      size: req.file.size,
-    };
-
+    const { id } = req.params; // get DocSet ID
     const userId = req.user.id;
 
-    const newDocSet = new DocSet({
-      userId: userId,
-      title: req.body.title || fileData.originalName,
-      files: [fileData.location],
-      tags: req.body.tags || [],
-      description: req.body.description || "",
-      stats: {},
-    });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Invalid DocSet ID" });
+    }
 
-    await newDocSet.save();
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: "No files have been uploaded" });
+    }
 
-    res.status(201).json({
+    // Gets file locations from uploaded PDFs
+    const uploadedFiles = req.files.map(file => file.location);
+
+    const docSet = await DocSet.findOne({ _id: id, userId });
+
+    if (!docSet) {
+      return res.status(404).json({ error: "Document set not found" });
+    }
+
+    // Adds uploaded files to the existing files array
+    docSet.files.push(...uploadedFiles);
+
+    await docSet.save();
+
+    res.status(200).json({
       success: true,
-      message: 'Document set created with uploaded file',
-      docSet: newDocSet
+      message: 'Files uploaded and added to document set successfully',
+      docSet
     });
   } catch (error) {
-    console.error('Error uploading document:', error);
+    console.error('Error uploading documents:', error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -141,5 +141,5 @@ module.exports = {
   updateDocumentSet,
   deleteDocSet,
   getDocumentSet,
-  uploadPDF
+  uploadPDFs
 };
