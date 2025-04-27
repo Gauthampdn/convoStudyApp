@@ -19,28 +19,9 @@ const openai = new OpenAI({
 
 // HELPER METHODS FOR MODULARITY
 
-// // Used to get PDF buffer
-// const downloadPDF = async (pdfUrl) => {
-//   const response = await axios.get(pdfUrl, { responseType: "arraybuffer" });
-//   return response.data;
-// };
-
-// BACKUP TEXT EXTRACTOR USING pdf-parse LIBRARY
-// const extractTextFromPDF = async (pdfBuffer) => {
-//   const options = {
-//     pagerender: (pageData) => {
-//       return pageData.getTextContent().then((textContent) => {
-//         const strings = textContent.items.map((item) => item.str);
-//         return strings.join(" ");
-//       });
-//     },
-//   };
-//   const data = await pdf(pdfBuffer, options);
-//   const pageBreakRegex = /(\f|\r\n\r\n|\n\n)/; // Depending on how the page break is encoded
-//   const pages = data.text.split(pageBreakRegex);
-//   return pages;
-// };
-
+// Description: Extract text from each page of PDF and return an array of text from each page.
+// Parameter(s): pdfUrl: (s3 bucket URL)
+// Return: pages: array where index is page number and elements are the text from each page
 const extractTextFromPDF = async (pdfUrl) => {
   //   const data = await pdf(pdfBuffer);
   const loadingData = getDocument(pdfUrl);
@@ -59,6 +40,9 @@ const extractTextFromPDF = async (pdfUrl) => {
   return pages;
 };
 
+// Description: Use LangChain RecursiveCharacterTextSplitter to split text into chunks
+// Parameter(s): text: all text from 1 PDF page
+// Return: chunks: array of Documents which each contain a text chunk and other data.
 const splitIntoChunks = async (text) => {
   //   console.log(text);
   //   console.log("splitIntoChunks Function");
@@ -72,6 +56,9 @@ const splitIntoChunks = async (text) => {
   return chunks;
 };
 
+// Description: Generates an embedding based on the textChunk using the ada openai embedding model
+// Parameter(s): textChunk: Chunk of text
+// Return: embedding: 1536 openai embedding
 const generateEmbedding = async (textChunk) => {
   //   console.log("generateEmbedding Function");
   //   console.log(textChunk);
@@ -86,6 +73,9 @@ const generateEmbedding = async (textChunk) => {
   return embedding;
 };
 
+// Description: Create new Embedding Document and save.
+// Parameter(s): Many parameters
+// Return: entry: Embedding document that was created
 const saveEmbeddingToDB = async ({
   docSetId,
   fileId,
@@ -109,54 +99,27 @@ const saveEmbeddingToDB = async ({
   return entry;
 };
 
+// CREATE PDF EMBEDDING
 const PDFEmbedding = async (req, res) => {
   const { pdfUrl, docSetId } = req.body;
 
   try {
-    // const pdfBuffer = await downloadPDF(pdfUrl);
-    // const pageTexts = await extractTextFromPDF(pdfBuffer);
-    const pageTexts = await extractTextFromPDF(pdfUrl);
-    console.log("Number of pages detected: ", pageTexts.length);
-    pageTexts.forEach((page, idx) => {
-      console.log(`Page ${idx + 1} length: ${page.length}`);
-    });
+    const pageTexts = await extractTextFromPDF(pdfUrl); // pageTexts contains an array with elements being the text from each page that is read.
+    // console.log("Number of pages detected: ", pageTexts.length);
+    // pageTexts.forEach((page, idx) => {
+    //   console.log(`Page ${idx + 1} length: ${page.length}`);
+    // });
     // const chunks = await splitIntoChunks(text);
     const fileId = new mongoose.Types.ObjectId();
 
     const savedEmbeddings = []; // for logging/success purposes
 
-    // console.log(chunks.length);
-
-    // for (let i = 0; i < chunks.length; i++) {
-    //   //   console.log(chunks[i]);
-    //   const textChunk = chunks[i].pageContent;
-    //   //   console.log(textChunk);
-    //   const metadata = chunks[i].metadata;
-    //   //   console.log(metadata);
-    //   const embedding = await generateEmbedding(textChunk);
-    //   console.log(embedding);
-
-    //   if (!embedding) {
-    //     console.warn(`Failed to generate embedding for chunk ${i}`);
-    //     continue;
-    //   }
-
-    //   const saved = await saveEmbeddingToDB({
-    //     docSetId,
-    //     fileId,
-    //     chunkIndex: i,
-    //     textChunk,
-    //     embedding,
-    //     metadata: { source: pdfUrl },
-    //   });
-
-    //   savedEmbeddings.push(saved);
-    // }
-
+    // iterates through each pdf page
     for (const [pageIndex, pageText] of pageTexts.entries()) {
       //   console.log(pageText);
-      const chunks = await splitIntoChunks(pageText);
+      const chunks = await splitIntoChunks(pageText); // split page's text into chunks
 
+      // iterate through chunks for each page
       for (const [chunkIndex, chunk] of chunks.entries()) {
         // console.log(chunk);
         const embedding = await generateEmbedding(chunk.pageContent);
@@ -166,7 +129,7 @@ const PDFEmbedding = async (req, res) => {
           continue;
         }
 
-        console.log(pageIndex + 1);
+        // console.log(pageIndex + 1);
 
         const saved = await saveEmbeddingToDB({
           docSetId,
@@ -181,6 +144,7 @@ const PDFEmbedding = async (req, res) => {
         savedEmbeddings.push(saved);
       }
     }
+    // return success, # of embeddings, and fileId
     res.status(201).json({
       message: "Embeddings created successfully",
       count: savedEmbeddings.length,
@@ -202,12 +166,13 @@ const PDFEmbedding = async (req, res) => {
   }
 };
 
+// GET EMBEDDINGS
 const getEmbeddingsFromDocSet = async (req, res) => {
   // document set id
   const { id } = req.params;
 
   try {
-    const embeddings = await Embedding.find({ docSetId: id });
+    const embeddings = await Embedding.find({ docSetId: id }); // find all Embeddings with docSetId
     if (!embeddings) {
       return res.status(404).json({
         message:
