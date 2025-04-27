@@ -6,7 +6,7 @@ const {
   getEmbeddingsFromDocSet,
 } = require("../controllers/embeddingController");
 
-// router.use(protect);
+router.use(protect);
 
 router.post("/create", PDFEmbedding);
 router.get("/docsets/:id/", getEmbeddingsFromDocSet);
