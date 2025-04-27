@@ -4,8 +4,9 @@ const router = express.Router();
 const { 
   deleteDocSet,
   getAllDocSets,
+  getDocumentSet,
   updateDocumentSet,
-  uploadPDF
+  uploadPDFs
 } = require("../controllers/docSetController");
 
 const upload = require('../middleware/uploadMiddleware'); 
@@ -17,8 +18,9 @@ router.use(protect);
 
 router.delete("/:id", deleteDocSet);
 router.get('/', getAllDocSets);
+router.get('/:id', getDocumentSet);
 router.patch("/:id", updateDocumentSet);
-router.post('/file/upload', upload.single('file'), uploadPDF);
+router.post('/upload/:id', upload.array('files'), uploadPDFs);
 
 
 module.exports = router;
