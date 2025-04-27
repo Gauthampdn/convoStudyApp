@@ -18,6 +18,8 @@ const ttsRoutes = require("./routes/ttsRoutes");
 const app = express();
 
 // middleware
+app.use(express.json());
+
 app.use(express.json()); // to get req body
 
 app.use(

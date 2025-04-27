@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { streamTTS } from "../services/ttsService";
+
 import {
   Text,
   View,
@@ -6,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
+  TextInput,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { useGoogleAuth, processGoogleSignIn } from "../services/authService";
@@ -18,6 +21,10 @@ export default function Index() {
 
   const { user, isAuthenticated, login, logout } = useAuth();
   const { request, response, promptAsync } = useGoogleAuth();
+
+  //for tts
+  const [ttsText, setTtsText] = useState("");
+  const [isTtsLoading, setIsTtsLoading] = useState(false);
 
   useEffect(() => {
     if (response?.type === "success") {
@@ -61,6 +68,20 @@ export default function Index() {
     }
   };
 
+  const handlePlayTTS = async () => {
+    if (!ttsText.trim()) return;
+
+    setIsTtsLoading(true);
+
+    try {
+      await streamTTS(ttsText);
+    } catch (error) {
+      console.error("TTS error:", error);
+    } finally {
+      setIsTtsLoading(false);
+    }
+  };
+
   // return <DocumentSets />;
   return (
     <View style={styles.container}>
@@ -74,13 +95,17 @@ export default function Index() {
                 style={styles.profileImage}
               />
             )}
-            <Text style={styles.label}>Name: <Text style={styles.value}>{user.name}</Text></Text>
-            <Text style={styles.label}>Email: <Text style={styles.value}>{user.email}</Text></Text>
+            <Text style={styles.label}>
+              Name: <Text style={styles.value}>{user.name}</Text>
+            </Text>
+            <Text style={styles.label}>
+              Email: <Text style={styles.value}>{user.email}</Text>
+            </Text>
             <Text style={styles.jsonData}>{JSON.stringify(user, null, 2)}</Text>
           </View>
-          
-          <TouchableOpacity 
-            style={styles.logoutButton} 
+
+          <TouchableOpacity
+            style={styles.logoutButton}
             onPress={handleLogout}
             disabled={isLoading}
           >
@@ -93,16 +118,18 @@ export default function Index() {
         </View>
       ) : (
         <View style={styles.card}>
-          <Text className="text-[24px] font-bold mb-[20px] text-center">Sign In</Text>
-          
+          <Text className="text-[24px] font-bold mb-[20px] text-center">
+            Sign In
+          </Text>
+
           {error ? (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{error}</Text>
             </View>
           ) : null}
-          
-          <TouchableOpacity 
-            style={styles.googleButton} 
+
+          <TouchableOpacity
+            style={styles.googleButton}
             onPress={handleGoogleSignIn}
             disabled={isLoading || !request}
           >
@@ -119,6 +146,42 @@ export default function Index() {
           </TouchableOpacity>
         </View>
       )}
+      <View style={{ marginTop: 30, width: "100%" }}>
+        <TextInput
+          style={{
+            height: 40,
+            borderColor: "gray",
+            borderWidth: 1,
+            borderRadius: 4,
+            marginBottom: 10,
+            paddingHorizontal: 10,
+            backgroundColor: "#fff",
+          }}
+          placeholder="Enter text for TTS"
+          value={ttsText}
+          onChangeText={setTtsText}
+        />
+
+        <TouchableOpacity
+          style={{
+            backgroundColor: "#4CAF50",
+            padding: 12,
+            borderRadius: 4,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onPress={handlePlayTTS}
+          disabled={isTtsLoading}
+        >
+          {isTtsLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={{ color: "#fff", fontSize: 16, fontWeight: "500" }}>
+              Play TTS
+            </Text>
+          )}
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
