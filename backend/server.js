@@ -13,6 +13,7 @@ const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const docSetRoutes = require("./routes/docSetRoutes");
 const sttRoutes = require("./routes/sttRoutes");
+const embeddingRoutes = require("./routes/embeddingRoutes");
 
 // express app
 const app = express();
@@ -54,6 +55,7 @@ app.use((req, res, next) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/docSet", docSetRoutes);
 app.use("/api/stt", sttRoutes);
+app.use("/api/embeddings", embeddingRoutes);
 
 // basic route for testing
 app.get("/", (req, res) => {

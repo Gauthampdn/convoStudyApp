@@ -20,6 +20,7 @@
     "express": "^4.21.2",
     "express-session": "^1.18.1",
     "jsonwebtoken": "^9.0.2",
+    "langchain": "^0.3.24",
     "mic": "^2.1.2",
     "mongoose": "^8.13.0",
     "nodemon": "^3.1.9",
