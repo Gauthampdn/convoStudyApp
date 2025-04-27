@@ -208,6 +208,12 @@ const getEmbeddingsFromDocSet = async (req, res) => {
 
   try {
     const embeddings = await Embedding.find({ docSetId: id });
+    if (!embeddings) {
+      return res.status(404).json({
+        message:
+          "Embeddings associated with this documentSet could not be found",
+      });
+    }
     res.status(200).json({ embeddings });
   } catch (error) {
     console.error(
