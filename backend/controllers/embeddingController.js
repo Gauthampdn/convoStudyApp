@@ -104,6 +104,11 @@ const PDFEmbedding = async (req, res) => {
   const { pdfUrl, docSetId } = req.body;
 
   try {
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(docSetId)) {
+      return res.status(404).json({ error: "Invalid DocSet ID" });
+    }
+
     const pageTexts = await extractTextFromPDF(pdfUrl); // pageTexts contains an array with elements being the text from each page that is read.
     // console.log("Number of pages detected: ", pageTexts.length);
     // pageTexts.forEach((page, idx) => {
@@ -115,17 +120,19 @@ const PDFEmbedding = async (req, res) => {
     const savedEmbeddings = []; // for logging/success purposes
 
     // iterates through each pdf page
+    let indexCount = 0;
     for (const [pageIndex, pageText] of pageTexts.entries()) {
       //   console.log(pageText);
       const chunks = await splitIntoChunks(pageText); // split page's text into chunks
 
       // iterate through chunks for each page
       for (const [chunkIndex, chunk] of chunks.entries()) {
+        console.log(indexCount);
         // console.log(chunk);
         const embedding = await generateEmbedding(chunk.pageContent);
 
         if (!embedding) {
-          console.warn(`Failed to generate embedding for chunk ${chunkIndex}`);
+          console.warn(`Failed to generate embedding for chunk ${indexCount}`);
           continue;
         }
 
@@ -134,13 +141,14 @@ const PDFEmbedding = async (req, res) => {
         const saved = await saveEmbeddingToDB({
           docSetId,
           fileId,
-          chunkIndex: chunkIndex,
+          chunkIndex: indexCount,
           textChunk: chunk.pageContent,
           embedding,
           metadata: { source: pdfUrl },
           pageNumber: pageIndex + 1,
         });
 
+        indexCount += 1;
         savedEmbeddings.push(saved);
       }
     }
