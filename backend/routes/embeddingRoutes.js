@@ -1,11 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const { protect } = require("../middleware/authMiddleware");
-const { PDFEmbedding } = require("../controllers/embeddingController");
+const {
+  PDFEmbedding,
+  getEmbeddingsFromDocSet,
+} = require("../controllers/embeddingController");
 
 // router.use(protect);
 
 router.post("/create", PDFEmbedding);
-router.get("/docsets/:id/");
+router.get("/docsets/:id/", getEmbeddingsFromDocSet);
 
 module.exports = router;
