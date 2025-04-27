@@ -3,8 +3,6 @@ const Embedding = require("../models/embeddingModel");
 
 // PDF embedding imports
 const { OpenAI } = require("openai");
-const axios = require("axios");
-const pdf = require("pdf-parse");
 const { getDocument } = require("pdfjs-dist/legacy/build/pdf.mjs");
 
 const mongoose = require("mongoose");
