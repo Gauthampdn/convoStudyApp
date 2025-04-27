@@ -96,11 +96,50 @@ const getDocumentSet = async (req, res) => {
   res.status(200).json(docSet);
 };
   
+
+const uploadPDF = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file has been uploaded" });
+    }
+
+    const fileData = {
+      location: req.file.location,
+      key: req.file.key,
+      originalName: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+    };
+
+    const userId = req.user.id;
+
+    const newDocSet = new DocSet({
+      userId: userId,
+      title: req.body.title || fileData.originalName,
+      files: [fileData.location],
+      tags: req.body.tags || [],
+      description: req.body.description || "",
+      stats: {},
+    });
+
+    await newDocSet.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Document set created with uploaded file',
+      docSet: newDocSet
+    });
+  } catch (error) {
+    console.error('Error uploading document:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
   
   
 module.exports = {
   getAllDocSets,
   updateDocumentSet,
   deleteDocSet,
-  getDocumentSet
+  getDocumentSet,
+  uploadPDF
 };
