@@ -5,8 +5,8 @@ import {
   Image,
   ActivityIndicator,
   FlatList,
-  Pressable,
   StatusBar,
+  TouchableOpacity,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import dummyUser from "../../dummyUser.json";
@@ -16,10 +16,12 @@ import DocumentSet from "../interfaces/interfaces";
 import Entypo from "@expo/vector-icons/Entypo";
 import { useRouter, useNavigation } from "expo-router";
 import { useWindowDimensions } from "react-native";
+import AddDocSetCard from "../components/AddDocSetModal";
 
 export default function DocumentSets() {
   const [documentSets, selectDocumentSets] = useState<DocumentSet[]>([]);
   const [hasDocuments, setHasDocuments] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
   const router = useRouter();
   const navigation = useNavigation();
   const { width, height } = useWindowDimensions();
@@ -67,7 +69,7 @@ export default function DocumentSets() {
           dummyEmptyDocSet = empty state (finished)
         */
         // const dummyDocumentSetsData = dummyDocumentSets;
-        const dummyDocumentSetsData = dummyEmptyDocSet;
+        // const dummyDocumentSetsData = dummyEmptyDocSet;
 
         /* if (data.success) {
             selectDocumentSets(data.data);
@@ -75,12 +77,12 @@ export default function DocumentSets() {
             console.error(data.message);
         } */
 
-        if (dummyDocumentSetsData && dummyDocumentSetsData.length > 0) {
-          selectDocumentSets(dummyDocumentSetsData);
-          setHasDocuments(true);
-        } else {
-          setHasDocuments(false);
-        }
+        // if (dummyDocumentSetsData && dummyDocumentSetsData.length > 0) {
+        //   selectDocumentSets(dummyDocumentSetsData);
+        //   setHasDocuments(true);
+        // } else {
+        //   setHasDocuments(false);
+        // }
       } catch (error) {
         console.error(error);
       }
@@ -88,9 +90,24 @@ export default function DocumentSets() {
     getDocumentSets();
   }, []);
 
-  // goes to the upload files page
-  const addSet = () => {
-    router.navigate("/pages/UploadFiles", { id: "123" });
+  const openAddDocSetModal = () => {
+    setModalVisible(true);
+  };
+
+  const closeAddDoctSetModal = () => {
+    setModalVisible(false);
+  };
+
+  const handleAddSet = (name: string, description: string, tags: string) => {
+    console.log(name, description, tags);
+    const newSet = {
+      id: Date.now().toString(),
+      title: name,
+      description: description,
+      tags: tags.split(","),
+    };
+    selectDocumentSets((prev) => [...prev, newSet]);
+    setHasDocuments(true);
   };
 
   return (
@@ -113,31 +130,50 @@ export default function DocumentSets() {
           <Text className="text-[14px] text-center font-outfit400 leading-[1.5] color-[#1F1F23] w-[285] mt-[8]">
             Create your first set to start organizing and learning faster.
           </Text>
-          <Pressable
+          <TouchableOpacity
             className="w-[130px] h-[48px] bg-[#2879FF] rounded-[12] items-center justify-center m-8 flex-row"
-            onPress={addSet}
+            onPress={openAddDocSetModal}
           >
             <Entypo name="plus" size={21} color={"white"} />
             <Text className="text-[14px] font-outfit600 color-[#FFFFFF] leading[1.3] text-center ml-3">
               Add Set
             </Text>
-          </Pressable>
+          </TouchableOpacity>
         </View>
       ) : (
         // populated state
-        <FlatList
-          data={documentSets}
-          renderItem={({ item }: { item: DocumentSet }) => (
-            <Pressable
-              className="p-4 border border-gray-300 rounded-lg m-2"
-              onPress={() => console.log(`Selected document: ${item.title}`)}
-            >
-              <Text className="text-lg font-semibold">{item.title}</Text>
-              <Text className="text-sm text-gray-500">{item.description}</Text>
-            </Pressable>
-          )}
-        ></FlatList>
+        <View className="flex-row justify-between">
+          <FlatList
+            data={documentSets}
+            renderItem={({ item }: { item: DocumentSet }) => (
+              <TouchableOpacity
+                className="p-4 bg-white rounded-lg m-2"
+                onPress={() => console.log(`Selected document: ${item.title}`)}
+              >
+                <Text className="text-lg font-semibold">{item.title}</Text>
+                <Text className="text-sm text-gray-500">
+                  {item.description}
+                </Text>
+                <Text>{item.tags}</Text>
+              </TouchableOpacity>
+            )}
+          />
+          <TouchableOpacity
+            className="w-[130px] h-[48px] bg-[#2879FF] rounded-[12] items-center justify-center m-8 flex-row"
+            onPress={openAddDocSetModal}
+          >
+            <Entypo name="plus" size={21} color={"white"} />
+            <Text className="text-[14px] font-outfit600 color-[#FFFFFF] leading[1.3] text-center ml-3">
+              Add Set
+            </Text>
+          </TouchableOpacity>
+        </View>
       )}
+      <AddDocSetCard
+        visible={modalVisible}
+        onClose={closeAddDoctSetModal}
+        onAddSet={handleAddSet}
+      />
     </View>
   );
 }
