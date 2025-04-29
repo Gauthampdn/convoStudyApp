@@ -2,11 +2,11 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   View,
   Text,
-  Pressable,
   FlatList,
   ActivityIndicator,
   StatusBar,
   Alert,
+  TouchableOpacity,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
@@ -41,9 +41,9 @@ export default function DocumentUpload() {
          *  else, cancel
          *  - make a function goBackToMySets() with navigation.goBack() inside
          */
-        <Pressable onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.back()}>
           <Entypo name="chevron-thin-left" size={24} color="#000000" />
-        </Pressable>
+        </TouchableOpacity>
       ),
       headerLeftContainerStyle: {
         padding: 100,
@@ -266,7 +266,7 @@ export default function DocumentUpload() {
   const save = (status: boolean) => {
     return (
       <View className="flex-1 justify-end items-center bottom-8 mb-4">
-        <Pressable
+        <TouchableOpacity
           className={`w-[361px] h-[44px] rounded-[12px] items-center justify-center ${
             status ? "bg-[#2879FF]" : "bg-[#CECECE]"
           }`}
@@ -280,7 +280,7 @@ export default function DocumentUpload() {
           >
             Save
           </Text>
-        </Pressable>
+        </TouchableOpacity>
       </View>
     );
   };
@@ -296,7 +296,7 @@ export default function DocumentUpload() {
 
       <View className="items-center">
         {/** upload box */}
-        <Pressable
+        <TouchableOpacity
           className="border-[1px] border-dashed border-[#1849D6] h-[194px] w-[361px] bg-white rounded-[8px] items-center justify-center mb-6"
           onPress={selectDocuments}
         >
@@ -313,15 +313,15 @@ export default function DocumentUpload() {
           </Text>
 
           {/** browse button */}
-          <Pressable
+          <TouchableOpacity
             className="w-[102px] h-[36px] bg-[#FFFFFF] border-[2px] border-[#2879FF] rounded-[12px] items-center justify-center"
             onPress={selectDocuments}
           >
             <Text className="text-[15px] font-outfit500 leading-[1.3] color-[#2879FF]">
               Browse
             </Text>
-          </Pressable>
-        </Pressable>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </View>
 
       {files.length === 0 ? (
@@ -372,9 +372,9 @@ export default function DocumentUpload() {
                   {statusHandler(status[item.name])}
 
                   {/** remove file button */}
-                  <Pressable onPress={() => removeFile(item.name)}>
+                  <TouchableOpacity onPress={() => removeFile(item.name)}>
                     <Feather name="x-circle" size={20} color="#FF3636" />
-                  </Pressable>
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
