@@ -10,17 +10,25 @@ import {
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
-import { useNavigation, useRouter } from "expo-router";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { Entypo } from "@expo/vector-icons";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Feather } from "@expo/vector-icons";
+import { useDocumentSets } from "@/context/DocumentSetContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import UploadFilesButton from "../components/UploadFilesButton";
 
-export default function DocumentUpload() {
+export default function UploadFiles() {
+  const { id } = useLocalSearchParams();
+  const { documentSets, setDocumentSets } = useDocumentSets();
   const [files, setFiles] = useState<DocumentPicker.DocumentPickerAsset[]>([]);
   const [status, setStatus] = useState<Record<string, string>>({});
   const [saveEnabled, setSaveEnabled] = useState(false);
   const navigation = useNavigation();
   const router = useRouter();
+
+  const documentSet = documentSets.find((set) => set.id === id);
+  console.log("DOC SET: ", documentSet?.title);
 
   // header
   useLayoutEffect(() => {
@@ -35,22 +43,19 @@ export default function DocumentUpload() {
         backgroundColor: "#F1F3F6",
       },
       headerLeft: () => (
-        /** TODO: if there are files that are not in "saved" state
-         *  alert the user to check if they want to go back.
-         *  if they do, it will discard the files that aren't "saved"
-         *  else, cancel
-         *  - make a function goBackToMySets() with navigation.goBack() inside
-         */
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={goBackToMySets}>
           <Entypo name="chevron-thin-left" size={24} color="#000000" />
         </TouchableOpacity>
       ),
-      headerLeftContainerStyle: {
-        padding: 100,
-      },
     });
     StatusBar.setBarStyle("dark-content", true);
   });
+
+  useEffect(() => {
+    if (documentSet?.files) {
+      setFiles(documentSet.files);
+    }
+  }, [documentSet]);
 
   useEffect(() => {
     if (files.some((file) => status[file.name] === "selected")) {
@@ -115,7 +120,15 @@ export default function DocumentUpload() {
         );
 
         // adds the new file(s) on top of the previous ones
-        setFiles((prev) => [...sortedFiles, ...prev]);
+        setFiles((prev) => [
+          ...sortedFiles.map((f) => ({
+            name: f.name,
+            size: f.size,
+            uri: f.uri,
+            mimeType: f.mimeType,
+          })),
+          ...prev,
+        ]);
 
         // sets status to "selected"
         sortedFiles.forEach((file) => {
@@ -127,18 +140,19 @@ export default function DocumentUpload() {
     }
   };
 
-  const startTimer = (fileName: string) => {
-    const interval = setInterval(() => {
-      setStatus((prev) => {
-        if (prev[fileName] !== "uploading") return prev; // skip files that aren't uploading
+  const startTimerAsync = (fileName: string): Promise<void> => {
+    return new Promise((resolve) => {
+      const interval = setInterval(() => {
+        setStatus((prev) => {
+          if (prev[fileName] !== "uploading") return prev;
 
-        // change status to "saved" after uploading is done
-        const updated = { ...prev, [fileName]: "saved" };
-        return updated;
-      });
-
-      clearInterval(interval);
-    }, 5000); // simulate 5 seconds upload (will replace with actual backend uploading time)
+          const updated = { ...prev, [fileName]: "saved" };
+          clearInterval(interval);
+          resolve();
+          return updated;
+        });
+      }, 5000); // simulate 5 seconds
+    });
   };
 
   const removeFile = (fileName: string) => {
@@ -152,10 +166,17 @@ export default function DocumentUpload() {
           style: "destructive",
           onPress: () => {
             // remove from files
-            setFiles((prev) => prev.filter((file) => file.name !== fileName));
+            const updatedFiles = files.filter((file) => file.name !== fileName);
+            setFiles(updatedFiles);
 
+            if (documentSet) {
+              documentSet.files = documentSet.files.filter((file) => {
+                file.name !== fileName;
+                console.log(documentSet.files.length);
+              });
+            }
             // sends updated files (w/o the removed file) to backend
-            sendToBackend(files);
+            sendToBackend(updatedFiles); // TODO: probably need a DELETE request here instead
           },
         },
       ]
@@ -186,11 +207,12 @@ export default function DocumentUpload() {
     });
 
     // start timers for unsaved files
-    files.forEach((file) => {
-      if (status[file.name] !== "saved") {
-        startTimer(file.name);
-      }
-    });
+    const uploadPromises = files
+      .filter((file) => status[file.name] !== "saved")
+      .map((file) => startTimerAsync(file.name));
+
+    // wait for all uploads to finish
+    await Promise.all(uploadPromises);
 
     // sends all the files for now
     sendToBackend(files);
@@ -199,6 +221,9 @@ export default function DocumentUpload() {
   const sendToBackend = async (
     savedFiles: DocumentPicker.DocumentPickerAsset[]
   ) => {
+    console.log("Saved Files: ", savedFiles);
+
+    // convert files to base64
     const fileMetaList = await Promise.all(
       savedFiles.map(async (file) => {
         const base64Url = await getBase64Url(file.uri, file.mimeType);
@@ -210,7 +235,12 @@ export default function DocumentUpload() {
       })
     );
 
-    console.log(fileMetaList);
+    // this is just for frontend displaying locally
+    savedFiles.forEach((file) => {
+      console.log(documentSet?.files.push(file));
+    });
+
+    // console.log(fileMetaList);
 
     try {
       // TODO: need the document set id to be passed
@@ -226,8 +256,33 @@ export default function DocumentUpload() {
 
       if (!response.ok) throw new Error(`Error: ${response.status}`);
       console.log("Success", await response.json());
+
+      const updatedStatus = { ...status };
+      for (const file of savedFiles) {
+        updatedStatus[file.name] = "saved";
+      }
+      setStatus(updatedStatus);
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const goBackToMySets = () => {
+    const unsavedFilesExist = files.some(
+      (file) => status[file.name] !== "saved"
+    );
+
+    if (unsavedFilesExist) {
+      Alert.alert(
+        "Unsaved Files",
+        "Some files are not saved. Do you still want to go back? This will discard those files.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Yes", style: "destructive", onPress: () => router.back() },
+        ]
+      );
+    } else {
+      router.back();
     }
   };
 
@@ -313,14 +368,7 @@ export default function DocumentUpload() {
           </Text>
 
           {/** browse button */}
-          <TouchableOpacity
-            className="w-[102px] h-[36px] bg-[#FFFFFF] border-[2px] border-[#2879FF] rounded-[12px] items-center justify-center"
-            onPress={selectDocuments}
-          >
-            <Text className="text-[15px] font-outfit500 leading-[1.3] color-[#2879FF]">
-              Browse
-            </Text>
-          </TouchableOpacity>
+          <UploadFilesButton text={"Browse"} onPress={selectDocuments} />
         </TouchableOpacity>
       </View>
 

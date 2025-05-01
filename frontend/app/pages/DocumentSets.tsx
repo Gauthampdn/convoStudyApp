@@ -16,10 +16,14 @@ import DocumentSet from "../interfaces/interfaces";
 import Entypo from "@expo/vector-icons/Entypo";
 import { useRouter, useNavigation } from "expo-router";
 import { useWindowDimensions } from "react-native";
-import AddDocSetCard from "../components/AddDocSetModal";
+import DocumentSetItem from "../components/DocumentSetItem";
+import AddDocSetModal from "../components/AddDocSetModal";
+import { useDocumentSets } from "@/context/DocumentSetContext";
+import ClearStorageButton from "../components/ClearAsyncButton";
+import ViewStorageButton from "../components/ViewAsyncButton";
 
 export default function DocumentSets() {
-  const [documentSets, selectDocumentSets] = useState<DocumentSet[]>([]);
+  const { documentSets, setDocumentSets } = useDocumentSets();
   const [hasDocuments, setHasDocuments] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const router = useRouter();
@@ -72,13 +76,13 @@ export default function DocumentSets() {
         // const dummyDocumentSetsData = dummyEmptyDocSet;
 
         /* if (data.success) {
-            selectDocumentSets(data.data);
+            setDocumentSets(data.data);
         } else {
             console.error(data.message);
         } */
 
         // if (dummyDocumentSetsData && dummyDocumentSetsData.length > 0) {
-        //   selectDocumentSets(dummyDocumentSetsData);
+        //   setDocumentSets(dummyDocumentSetsData);
         //   setHasDocuments(true);
         // } else {
         //   setHasDocuments(false);
@@ -98,20 +102,41 @@ export default function DocumentSets() {
     setModalVisible(false);
   };
 
-  const handleAddSet = (name: string, description: string, tags: string) => {
-    console.log(name, description, tags);
+  const handleAddSet = (
+    id: string,
+    name: string,
+    description: string,
+    tags: string
+  ) => {
+    console.log(id, name, description, tags);
     const newSet = {
-      id: Date.now().toString(),
+      id: id,
       title: name,
       description: description,
       tags: tags.split(","),
+      userId: "",
+      files: [],
+      stats: {
+        sessions: [],
+      },
+      createdAt: "",
+      updatedAt: "",
     };
-    selectDocumentSets((prev) => [...prev, newSet]);
+    setDocumentSets((prev) => [...prev, newSet]);
     setHasDocuments(true);
   };
 
+  const viewDocSet = async (docSet: DocumentSet) => {
+    console.log("selected doc set: ", docSet.title);
+    await AsyncStorage.setItem(`docSet:${docSet.id}`, JSON.stringify(docSet));
+    router.push({
+      pathname: "/pages/DocumentSetPage",
+      params: { id: docSet.id },
+    });
+  };
+
   return (
-    <View className="flex-1 bg-[#F1F3F6] items-center">
+    <View className="flex-1 bg-[#F1F3F6]">
       {!hasDocuments ? (
         // empty state w-[333px] h-[242px] mt-[50]
         <View className="items-center">
@@ -142,34 +167,31 @@ export default function DocumentSets() {
         </View>
       ) : (
         // populated state
-        <View className="flex-row justify-between">
-          <FlatList
-            data={documentSets}
-            renderItem={({ item }: { item: DocumentSet }) => (
-              <TouchableOpacity
-                className="p-4 bg-white rounded-lg m-2"
-                onPress={() => console.log(`Selected document: ${item.title}`)}
-              >
-                <Text className="text-lg font-semibold">{item.title}</Text>
-                <Text className="text-sm text-gray-500">
-                  {item.description}
-                </Text>
-                <Text>{item.tags}</Text>
-              </TouchableOpacity>
-            )}
-          />
+        <>
+          <View>
+            <FlatList
+              className="p-[12px]"
+              data={[...documentSets].reverse()}
+              keyExtractor={(item) => item.id}
+              numColumns={2}
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+              renderItem={({ item }) => (
+                <DocumentSetItem item={item} onPress={() => viewDocSet(item)} />
+              )}
+            />
+          </View>
           <TouchableOpacity
-            className="w-[130px] h-[48px] bg-[#2879FF] rounded-[12] items-center justify-center m-8 flex-row"
+            className="absolute bottom-[5%] right-[1%] w-[56px] h-[56px] rounded-[100px] bg-[#2879FF] items-center justify-center m-2"
             onPress={openAddDocSetModal}
           >
             <Entypo name="plus" size={21} color={"white"} />
-            <Text className="text-[14px] font-outfit600 color-[#FFFFFF] leading[1.3] text-center ml-3">
-              Add Set
-            </Text>
           </TouchableOpacity>
-        </View>
+        </>
       )}
-      <AddDocSetCard
+      <ViewStorageButton></ViewStorageButton>
+      <ClearStorageButton></ClearStorageButton>
+      <AddDocSetModal
         visible={modalVisible}
         onClose={closeAddDoctSetModal}
         onAddSet={handleAddSet}
