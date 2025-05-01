@@ -1,31 +1,20 @@
-import { Button, Alert, View } from "react-native";
+import { Button } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export default function ClearStorageButton() {
-  const clearStorage = async () => {
+export default function ClearStorageButton({
+  onClear,
+}: {
+  onClear: () => void;
+}) {
+  const handleClearStorage = async () => {
     try {
       await AsyncStorage.clear();
-      Alert.alert("Cleared", "async cleared");
+      console.log("async cleared");
+      onClear();
     } catch (error) {
-      Alert.alert("Error", "failed to clear async");
-      console.log("Clear AsyncStorage error:", error);
+      console.error("failed to clear async", error);
     }
   };
 
-  const confirmClear = () => {
-    Alert.alert(
-      "Confirm Clear",
-      "Are you sure you want to clear all stored data?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Clear", style: "destructive", onPress: clearStorage },
-      ]
-    );
-  };
-
-  return (
-    <View>
-      <Button title="Clear AsyncStorage" color="red" onPress={confirmClear} />
-    </View>
-  );
+  return <Button title="Clear Storage" onPress={handleClearStorage} />;
 }
