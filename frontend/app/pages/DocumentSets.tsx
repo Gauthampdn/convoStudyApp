@@ -21,6 +21,7 @@ import AddDocSetModal from "../components/AddDocSetModal";
 import { useDocumentSets } from "@/context/DocumentSetContext";
 import ClearStorageButton from "../components/ClearAsyncButton";
 import ViewStorageButton from "../components/ViewAsyncButton";
+import * as DocumentPicker from "expo-document-picker";
 
 export default function DocumentSets() {
   const { documentSets, setDocumentSets } = useDocumentSets();
@@ -50,47 +51,25 @@ export default function DocumentSets() {
   useEffect(() => {
     const getDocumentSets = async () => {
       try {
-        const token = await AsyncStorage.getItem("token");
-        /* const response = await fetch("http://localhost:8081/api/docSet", {
-                    method: "GET",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                }); */
+        const keys = await AsyncStorage.getAllKeys();
+        const docSetKeys = keys.filter((key) => key.startsWith("docSet:"));
 
-        /* if (!response.ok) {
-                    console.error(response.text);
-                    } */
+        const keyValuePairs = await AsyncStorage.multiGet(docSetKeys);
+        const sets = keyValuePairs
+          .map(([key, value]) => {
+            if (value) return JSON.parse(value);
+            return null;
+          })
+          .filter((set) => set !== null);
 
-        // const data = await response.json();
-
-        const dummyUserData = dummyUser;
-
-        /* 
-          comment one or the other out to see the respective pages
-          dummyDocumentSets = populated state (unfinished)
-          dummyEmptyDocSet = empty state (finished)
-        */
-        // const dummyDocumentSetsData = dummyDocumentSets;
-        // const dummyDocumentSetsData = dummyEmptyDocSet;
-
-        /* if (data.success) {
-            setDocumentSets(data.data);
-        } else {
-            console.error(data.message);
-        } */
-
-        // if (dummyDocumentSetsData && dummyDocumentSetsData.length > 0) {
-        //   setDocumentSets(dummyDocumentSetsData);
-        //   setHasDocuments(true);
-        // } else {
-        //   setHasDocuments(false);
-        // }
+        setDocumentSets(sets);
+        setHasDocuments(sets.length > 0);
+        console.log("Loaded doc sets from AsyncStorage:", sets);
       } catch (error) {
-        console.error(error);
+        console.error("Failed to load document sets:", error);
       }
     };
+
     getDocumentSets();
   }, []);
 
@@ -133,6 +112,11 @@ export default function DocumentSets() {
       pathname: "/pages/DocumentSetPage",
       params: { id: docSet.id },
     });
+  };
+
+  const handleClear = () => {
+    setDocumentSets([]);
+    setHasDocuments(false);
   };
 
   return (
@@ -190,7 +174,7 @@ export default function DocumentSets() {
         </>
       )}
       <ViewStorageButton></ViewStorageButton>
-      <ClearStorageButton></ClearStorageButton>
+      <ClearStorageButton onClear={handleClear}></ClearStorageButton>
       <AddDocSetModal
         visible={modalVisible}
         onClose={closeAddDoctSetModal}
