@@ -175,8 +175,15 @@ export default function UploadFiles() {
                 console.log(documentSet.files.length);
               });
             }
+
+            /**
+             * TODO: probably need a DELETE request here instead
+             *  - and instead of creating an updatedFiles, just
+             *    pass the fileName to be deleted from the backend
+             */
+
             // sends updated files (w/o the removed file) to backend
-            sendToBackend(updatedFiles); // TODO: probably need a DELETE request here instead
+            sendToBackend(updatedFiles); 
           },
         },
       ]
