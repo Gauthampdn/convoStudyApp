@@ -1,4 +1,4 @@
-import { Button, View, Alert } from "react-native";
+import { Button, View} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function ViewStorageButton() {
@@ -11,10 +11,7 @@ export default function ViewStorageButton() {
       items.forEach(([key, value]) => {
         console.log(`${key}:`, value);
       });
-
-      Alert.alert("Logged", "logged async");
     } catch (error) {
-      Alert.alert("Error", "failed to read async");
       console.log("Read AsyncStorage error:", error);
     }
   };
