@@ -19,7 +19,8 @@ import SignIn from "./components/SignInButton";
 export default function Index() {
   return (
     // <SignIn/>
-    <Onboarding/>
+    <DocumentSets/>
+    // <Onboarding/>
   )
   // const [isLoading, setIsLoading] = useState(false);
   // const [error, setError] = useState("");
