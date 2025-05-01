@@ -12,37 +12,46 @@ import {
 import { useRouter } from "expo-router";
 import { useState } from "react";
 
-type AddDocSetCardProps = {
+type AddDocSetModalProps = {
   visible: boolean;
   onClose: () => void;
-  onAddSet: (name: string, description: string, tags: string) => void;
+  onAddSet: (
+    id: string,
+    name: string,
+    description: string,
+    tags: string
+  ) => void;
 };
 
-export default function AddDocSetCard({
+export default function AddDocSetModal({
   visible,
   onClose,
   onAddSet,
-}: AddDocSetCardProps) {
+}: AddDocSetModalProps) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
 
-  const addSet = (name: string, description: string, tags: string) => {
+  const addSet = async (name: string, description: string, tags: string) => {
     if (!name.trim() || !description.trim() || !tags.trim()) {
       alert("Please fill out all fields.");
       return;
     }
 
-    onAddSet(name, description, tags);
+    let id = Date.now().toString();
+
+    onAddSet(id, name, description, tags);
 
     // reset placeholder texts
     setName("");
     setDescription("");
     setTags("");
 
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
     onClose();
-    router.navigate("/pages/UploadFiles");
+    router.navigate({ pathname: "/pages/UploadFiles", params: { id } });
   };
 
   return (
