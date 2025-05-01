@@ -51,6 +51,14 @@ export default function DocumentSets() {
   useEffect(() => {
     const getDocumentSets = async () => {
       try {
+        // const response = await fetch("http://localhost:8081/api/docSet", {
+        //   method: "GET",
+        //   headers: {
+        //     Authorization: `Bearer ${token}`,
+        //     "Content-Type": "application/json",
+        //   },
+        // });
+
         const keys = await AsyncStorage.getAllKeys();
         const docSetKeys = keys.filter((key) => key.startsWith("docSet:"));
 
@@ -60,13 +68,13 @@ export default function DocumentSets() {
             if (value) return JSON.parse(value);
             return null;
           })
-          .filter((set) => set !== null);
+          .filter((set) => set !== null); // only show the sets with info
 
         setDocumentSets(sets);
         setHasDocuments(sets.length > 0);
-        console.log("Loaded doc sets from AsyncStorage:", sets);
+        console.log("loaded doc sets from async:", sets);
       } catch (error) {
-        console.error("Failed to load document sets:", error);
+        console.log("failed to load from async:", error);
       }
     };
 
