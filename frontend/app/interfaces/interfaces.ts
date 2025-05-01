@@ -1,8 +1,10 @@
+import * as DocumentPicker from "expo-document-picker";
+
 export default interface DocumentSet {
-    // _id: string;
+    id: string;
     title: string;
     userId: string;
-    files: string[];
+    files: DocumentPicker.DocumentPickerAsset[];
     tags: string[];
     description: string;
     stats: {
