@@ -1,5 +1,6 @@
 import { Stack } from "expo-router";
 import { AuthProvider } from "../context/AuthContext";
+import { DocumentSetProvider } from "@/context/DocumentSetContext";
 import {
   useFonts,
   Outfit_100Thin,
@@ -28,7 +29,9 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <Stack />
+      <DocumentSetProvider>
+        <Stack />
+      </DocumentSetProvider>
     </AuthProvider>
   );
 }
