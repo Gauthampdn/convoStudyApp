@@ -1,4 +1,3 @@
-// UploadFilesButton.tsx
 import { Text, TouchableOpacity } from "react-native";
 
 type UploadFilesButtonProps = {
