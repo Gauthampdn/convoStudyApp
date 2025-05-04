@@ -1,5 +1,5 @@
-const User = require('../models/userModel');
-const DocSet = require('../models/docSetModel'); //docSetModel is imported to interact with docSet collection
+const User = require("../models/userModel");
+const DocSet = require("../models/docSetModel"); //docSetModel is imported to interact with docSet collection
 const mongoose = require("mongoose");
 
 const deleteDocSet = async (req, res) => {
@@ -26,27 +26,27 @@ const deleteDocSet = async (req, res) => {
 };
 
 //function to retrieve all documents for specified user
-const getAllDocSets = async (req, res) => { 
-    try {
+const getAllDocSets = async (req, res) => {
+  try {
     const userId = req.user.id; //gets userId
 
-    const docSets = await DocSet.find({userId}) //gets all documents sets where userId matches
-    .sort({ createdAt: -1 }); //all document sets are sorted with newest ones showing up first
+    const docSets = await DocSet.find({ userId }) //gets all documents sets where userId matches
+      .sort({ createdAt: -1 }); //all document sets are sorted with newest ones showing up first
 
     //responds with success message and retrieved document sets
     res.status(200).json({
-        success: true, 
-        count: docSets.length, //includes number of fetched document sets
-        data: docSets //includes data from the actual document sets
+      success: true,
+      count: docSets.length, //includes number of fetched document sets
+      data: docSets, //includes data from the actual document sets
     });
-    }
-    catch (error) { //if error occurs, it is logged and server response is sent
-        console.error('Error fetching document sets:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Server error while fetching document sets'
-        });
-    }
+  } catch (error) {
+    //if error occurs, it is logged and server response is sent
+    console.error("Error fetching document sets:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching document sets",
+    });
+  }
 };
 
 const updateDocumentSet = async (req, res) => {
@@ -95,12 +95,56 @@ const getDocumentSet = async (req, res) => {
 
   res.status(200).json(docSet);
 };
-  
-  
-  
+
+const deleteFileFromDocumentSet = async (req, res) => {
+  const { docSetId } = req.params; // document set ID to delete file from
+  const { fileName } = req.body; // file name to delete
+
+  try {
+    if (!mongoose.Types.ObjectId.isValid(docSetId)) {
+      return res.status(400).json({ error: "Invalid document set ID" });
+    }
+
+    const documentSet = await DocSet.findById(docSetId); // get document set by ID
+
+    // if docset not found
+    if (!documentSet) {
+      return res.status(404).json({ error: "Document set not found" });
+    }
+
+    // filter out file to be deleted from file array
+    const updatedFiles = documentSet.files.filter(
+      (file) => file.name !== fileName
+    );
+
+    // update document set with new files array
+    const updatedDocumentSet = await DocSet.findOneAndUpdate(
+      { _id: docSetId },
+      { files: updatedFiles },
+      { new: true } // return updated document set
+    );
+
+    if (!updatedDocumentSet) {
+      return res
+        .status(404)
+        .json({ error: "Document set not found after update" });
+    }
+
+    // success:
+    res.status(200).json({
+      message: "File removed successfully",
+      documentSet: updatedDocumentSet, // include updatedDocumentSet in response
+    });
+  } catch (error) {
+    // console.error("Error deleting file: ", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   getAllDocSets,
   updateDocumentSet,
   deleteDocSet,
-  getDocumentSet
+  getDocumentSet,
+  deleteFileFromDocumentSet,
 };
